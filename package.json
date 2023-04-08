@@ -1,0 +1,30 @@
+{
+  "name": "postgrancer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon index.ts",
+    "test": ""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tauksun/postgrancer.git"
+  },
+  "author": "tauksun",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/tauksun/postgrancer/issues"
+  },
+  "homepage": "https://github.com/tauksun/postgrancer#readme",
+  "dependencies": {
+    "dotenv": "^16.0.3",
+    "libpg-query": "^15.0.2"
+  },
+  "devDependencies": {
+    "@types/node": "^18.15.11",
+    "nodemon": "^2.0.22",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.0.3"
+  }
+}
