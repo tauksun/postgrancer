@@ -23,7 +23,10 @@ function initiateSaslMechanism(params: { mechanism: string }) {
   offset += 4;
   response.write(saslResponse, offset);
 
-  return response;
+  return {
+    response,
+    clientNonce,
+  };
 }
 
 export default initiateSaslMechanism;

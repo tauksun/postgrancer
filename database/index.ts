@@ -14,7 +14,7 @@ async function establishPrimaryDatabaseConnections() {
       });
 
       //-----------------------------------------------
-      console.log("Sending Intiate Auth Query ....");
+      console.log("Sending Intiate Auth Query Primary ....");
       //-----------------------------------------------
       const authBuffer = initiateAuthSession();
       primaryConnection.write(authBuffer);
@@ -43,6 +43,11 @@ async function establishReplicasDatabaseConnections() {
     for (let j = 0; j < replicaConnectionPool[i]; j++) {
       try {
         const replicaConnection = await connectToDB({ host, port });
+        //-----------------------------------------------
+        console.log(`Sending Intiate Auth Query Replica : ${i} ....`);
+        //-----------------------------------------------
+        const authBuffer = initiateAuthSession();
+        replicaConnection.write(authBuffer);
       } catch (error) {
         //////////////////
         console.log(
@@ -59,7 +64,7 @@ async function establishReplicasDatabaseConnections() {
 
 function establishDatabaseConnections() {
   establishPrimaryDatabaseConnections();
-  // establishReplicasDatabaseConnections();
+  establishReplicasDatabaseConnections();
 }
 
 export { establishDatabaseConnections };

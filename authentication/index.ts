@@ -1,3 +1,13 @@
-import { initiateAuthSession, initiateSaslMechanism } from "./db";
+import {
+  initiateAuthSession,
+  initiateSaslMechanism,
+  continueSaslSession,
+  finalizeSaslSession,
+} from "./db";
 
-export { initiateAuthSession, initiateSaslMechanism };
+export {
+  initiateAuthSession,
+  initiateSaslMechanism,
+  continueSaslSession,
+  finalizeSaslSession,
+};

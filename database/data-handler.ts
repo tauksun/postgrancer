@@ -1,7 +1,15 @@
-import { Socket } from "net";
-import { initiateSaslMechanism } from "../authentication";
+import {
+  continueSaslSession,
+  finalizeSaslSession,
+  initiateSaslMechanism,
+} from "../authentication";
 import { identifier } from "../query-handler";
-function dataHandler(params: { data: Buffer; dbConnection: Socket }) {
+import { IpostgranceDBSocket } from "./interface";
+
+function dataHandler(params: {
+  data: Buffer;
+  dbConnection: IpostgranceDBSocket;
+}) {
   // Identify
   const data = params.data;
   const dbConnection = params.dbConnection;
@@ -23,40 +31,62 @@ function dataHandler(params: { data: Buffer; dbConnection: Socket }) {
         }
         if (mechanism !== "SCRAM-SHA-256") {
           // Terminate connection (supported mechanism is SCRAM only)
-          console.log("=================================");
-          console.log(`Not a supported authentication mechanism. 
-                    Terminating Connecton.`);
-          console.log("=================================");
+          console.error(
+            "\x1b[41m%s\x1b[0m",
+            `Not a supported authentication mechanism. Terminating Connection.`
+          );
           return dbConnection.destroy();
         }
 
         // Generate Initial SASL response
-        const saslResponse = initiateSaslMechanism({ mechanism });
-        dbConnection.write(saslResponse);
+        const { response, clientNonce } = initiateSaslMechanism({ mechanism });
+        // Store connection parameters
+        Object.defineProperty(dbConnection, "_postgrancerDBConnectionData", {
+          value: {
+            clientNonce,
+          },
+          enumerable: true,
+          writable: true,
+          configurable: true,
+        });
+        dbConnection.write(response);
       } else if (authType === 11) {
         stage = "continue";
-        console.log({
-          stage,
-          data,
-          dataSTR: data.toString(),
-        });
+        let connectionData = {};
+        if (dbConnection._postgrancerDBConnectionData) {
+          connectionData = dbConnection._postgrancerDBConnectionData;
+        }
+        const { response, serverSignature, responseBuffer } =
+          continueSaslSession({
+            data,
+            _postgrancerDBConnectionData: connectionData,
+          });
+        if (dbConnection._postgrancerDBConnectionData) {
+          dbConnection._postgrancerDBConnectionData.serverSignature =
+            serverSignature;
+        }
+        dbConnection.write(responseBuffer);
       } else if (authType === 12) {
         stage = "final";
+        // Validate Server Signature
         // Don't Respond, Wait for Ready For Query
         // Store Database Metadata
-        console.log({
-          stage,
+        let connectionData = {};
+        if (dbConnection._postgrancerDBConnectionData) {
+          connectionData = dbConnection._postgrancerDBConnectionData;
+        }
+        finalizeSaslSession({
           data,
-          dataSTR: data.toString(),
+          _postgrancerDBConnectionData: connectionData,
         });
       }
 
       if (!stage) {
         // Terminate Connection
-        console.log("=================================");
-        console.log(`Not a valid authentication stage. 
-                    Terminating Connecton.`);
-        console.log("=================================");
+        console.error(
+          "\x1b[41m%s\x1b[0m",
+          `Not a valid authentication stage. Terminating Connection.`
+        );
         return dbConnection.destroy();
       }
 

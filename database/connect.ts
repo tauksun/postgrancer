@@ -1,18 +1,16 @@
 import net from "net";
 import dataHandler from "./data-handler";
+import { IpostgranceDBSocket } from "./interface";
 const connectToDB = (options: {
   host: string;
   port: number;
-}): Promise<net.Socket> => {
+}): Promise<IpostgranceDBSocket> => {
   return new Promise((resolve, reject) => {
     const dbConnection = net.createConnection({
       host: options.host,
       port: options.port,
     });
     dbConnection.on("ready", () => {
-      //-----------------------------------------------
-      console.log("connection to primary is ready ");
-      //-----------------------------------------------
       resolve(dbConnection);
     });
     dbConnection.on("error", (error) => {
