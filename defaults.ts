@@ -16,10 +16,16 @@ const replicaDatabaseConnectionPool = (params: {
 
 const client_encoding: string = "utf8";
 
+// Client Server
+const clientServerPort = 9876;
+const clientServerHost = "localhost";
+
 const defaults = {
   primaryDatabaseConnectionPool,
   replicaDatabaseConnectionPool,
   client_encoding,
+  clientServerPort,
+  clientServerHost,
 };
 
 export default defaults;

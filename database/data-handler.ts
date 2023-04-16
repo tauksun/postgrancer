@@ -93,7 +93,8 @@ function dataHandler(params: {
       break;
 
     default:
-      // Pipe to client socket
+      // Write to client socket
+      // Destroy connection if socket doesn't exits
       break;
   }
 }

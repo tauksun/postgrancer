@@ -40,6 +40,13 @@ const dbPassword: string = environmentVariables.dbPassword || "";
 const client_encoding: string =
   environmentVariables.client_encoding || defaults.client_encoding;
 
+// Client Server Configuration
+const clientServerPort: number = environmentVariables.clientServerPort
+  ? parseInt(environmentVariables.clientServerPort)
+  : defaults.clientServerPort;
+const clientServerHost: string =
+  environmentVariables.clientServerHost || defaults.clientServerHost;
+
 const constants = {
   version,
   primaryDatabaseHost,
@@ -52,6 +59,8 @@ const constants = {
   dbUser,
   dbPassword,
   client_encoding,
+  clientServerPort,
+  clientServerHost,
 };
 
 export default constants;
