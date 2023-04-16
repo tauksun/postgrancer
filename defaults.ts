@@ -1,3 +1,6 @@
+// Postgres Protocol
+const protocol = 196608;
+
 // Primary DB
 const primaryDatabaseConnectionPool = 20;
 
@@ -21,6 +24,7 @@ const clientServerPort = 9876;
 const clientServerHost = "localhost";
 
 const defaults = {
+  protocol,
   primaryDatabaseConnectionPool,
   replicaDatabaseConnectionPool,
   client_encoding,

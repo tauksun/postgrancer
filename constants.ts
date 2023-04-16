@@ -8,6 +8,9 @@ envLoader({ path: pathToEnvironmentVariables });
 // Constants
 const environmentVariables = process.env;
 const version: string | undefined = environmentVariables.version;
+const protocol: number =
+  (environmentVariables.protocol && parseInt(environmentVariables.protocol)) ||
+  defaults.protocol;
 
 // Primary
 const primaryDatabaseHost: string =
@@ -49,6 +52,7 @@ const clientServerHost: string =
 
 const constants = {
   version,
+  protocol,
   primaryDatabaseHost,
   primaryDatabasePort,
   primaryDatabaseConnectionPool,

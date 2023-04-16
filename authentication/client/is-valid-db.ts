@@ -1,0 +1,16 @@
+import constants from "../../constants";
+
+function isValidDB(database: string): boolean {
+  /////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////
+  // Make Below validation for multiple database architecture
+  /////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////
+  const validDBs = [constants.dbName];
+  if (validDBs.includes(database)) {
+    return true;
+  }
+  return false;
+}
+
+export default isValidDB;
