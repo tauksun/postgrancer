@@ -5,7 +5,7 @@ import {
   finalizeSaslSession,
 } from "./db";
 
-import { initiateClientAuthSession } from "./client";
+import { initiateClientAuthSession, continueClientSaslSession } from "./client";
 
 export {
   // DB
@@ -15,4 +15,5 @@ export {
   finalizeSaslSession,
   // Client
   initiateClientAuthSession,
+  continueClientSaslSession,
 };

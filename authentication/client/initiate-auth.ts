@@ -83,8 +83,10 @@ function initiateClientAuthSession(data: Buffer): {
   }
 
   // Response
-  const saslAuthenticationMechanism = "SCRAM-SHA-256\0";
-  // Message type (1) + length of message (4) + identifier (4) + mechanism name string
+  const saslAuthenticationMechanism = "SCRAM-SHA-256\0\0";
+
+  // Message type (1) + length of message (4)
+  // + identifier (4) + mechanism name string
   const responseMessageLength =
     1 + 4 + 4 + Buffer.byteLength(saslAuthenticationMechanism);
 
@@ -97,13 +99,6 @@ function initiateClientAuthSession(data: Buffer): {
   responseBuffer.writeInt32BE(10, responseOffset);
   responseOffset += 4;
   responseBuffer.write(saslAuthenticationMechanism, responseOffset);
-
-  ///////////////////////
-  /////////////////////
-  //Possible fix using the null chracter at the end of mechanism
-  //Task is to figure out how & go to next stage
-  /////////////////////
-  /////////////////////
 
   return {
     responseBuffer,

@@ -1,4 +1,7 @@
-import { initiateClientAuthSession } from "../authentication";
+import {
+  initiateClientAuthSession,
+  continueClientSaslSession,
+} from "../authentication";
 import clearSession from "./clear-session";
 import { IpostgranceClientSocket } from "./interface";
 import session from "./session";
@@ -28,25 +31,30 @@ function dataHandler(data: Buffer, socket: IpostgranceClientSocket) {
           return destroyAndClearSocket(socket);
         }
         socket.write(responseBuffer);
-        if (socket.auth?.stage) {
+        if (socket.auth) {
           socket.auth.stage++;
         }
         return;
 
       case 1:
         // Parse Initital Sasl Message
-        // client Nonce
-        console.log("============================");
-        console.log("On next stage .. leaving for now here.. ");
-        console.log(`For now , not recieving message after sending 
-            SCRAM Mechanism 256 as response in /client/initiate-auth-session.
-            FIX IT
-                    `);
         console.log({
           data,
           strData: data.toString(),
         });
-        console.log("============================");
+        const {
+          error: errorContinue = null,
+          responseBuffer: responseBufferContinue = "",
+        } = continueClientSaslSession(data);
+
+        //////////////////////////
+        //////////////////////////
+        //////////////////////////
+        console.log({ errorContinue, responseBufferContinue });
+        //////////////////////////
+        //////////////////////////
+        //////////////////////////
+
         if (socket.auth?.stage) {
           socket.auth.stage++;
         }
