@@ -21,8 +21,9 @@ function continueSaslSession(params: {
 
   // Generate Response //
   ///////////////////////////////////////////////////
-  // Validations & SCRAM logic from 'pg-protocol' //
-  //////////////////////////////////////////////////
+  // Validations & SCRAM logic from 'pg-protocol'  //
+  // 'https://datatracker.ietf.org/doc/rfc5802/'   //
+  ///////////////////////////////////////////////////
 
   // Extract Attributes
   const attributes = new Map(
@@ -53,7 +54,7 @@ function continueSaslSession(params: {
     );
   }
   const iteration = parseInt(iterationText, 10);
-
+  
   const clientNonce = params._postgrancerDBConnectionData.clientNonce;
   if (!clientNonce) {
     throw new Error("clientNonce is empty for dbConnection");

@@ -1,6 +1,12 @@
+import crypto from "crypto";
+import constants from "../../constants";
+
 function continueClientSaslSession(data: Buffer): {
   error?: string;
   responseBuffer?: Buffer;
+  responseNonce?: string;
+  clientNonce?: string;
+  salt?: string;
 } {
   let responseBuffer = null,
     offset = 0;
@@ -37,32 +43,60 @@ function continueClientSaslSession(data: Buffer): {
 
   // SASL mechanism data
   let saslMechanismData = "";
-  for (let i = offset; i < receivedMessageLength; i++) {
+  for (let i = offset; i <= receivedMessageLength; i++) {
     const byte = data.readInt8(i);
     const char = String.fromCharCode(byte);
     saslMechanismData += char;
   }
 
-  ////////////////////////////////////////
-  ////////////////////////////////////////
-  ////////////////////////////////////////
-  console.log({
-    firstChar,
-    receivedMessageLength,
-    authenticationMechanism,
-    initialResponseLength,
-    saslMechanismData,
-  });
-  ////////////////////////////////////////
-  ////////////////////////////////////////
-  ////////////////////////////////////////
+  if (!saslMechanismData) {
+    return {
+      error: "Not a valid SASLInitialResponse",
+    };
+  }
+  const saslMechanismDataArray: string[] = saslMechanismData.split(",");
+  if (!(saslMechanismDataArray.length === 4)) {
+    return {
+      error: "Not a valid SASLInitialResponse",
+    };
+  }
+  const userData: string = saslMechanismDataArray[2];
+  const user: string = userData.slice(2);
+
+  const clientNonceData: string = saslMechanismDataArray[3];
+  const clientNonce: string = clientNonceData.slice(2);
 
   // Response
-  const responseLength = 0;
-  responseBuffer = Buffer.allocUnsafe(responseLength);
+  const salt = crypto.randomBytes(18).toString("base64");
+
+  const serverNonce = crypto.randomBytes(18).toString("base64");
+  const responseNonce = clientNonce + serverNonce;
+
+  const iterations: number = constants.scramIterations;
+
+  // AuthenticationSASLContinue Message
+  const message = `r=${responseNonce},s=${salt},i=${iterations}`;
+  // Message Byte (1) + Message Length (4) + Message Code (4) + Message
+  const messageLength = 1 + 4 + 4 + Buffer.byteLength(message);
+
+  responseBuffer = Buffer.allocUnsafe(messageLength);
+
+  let serverResponseBufferOffset = 0;
+  responseBuffer.write("R");
+  serverResponseBufferOffset += 1;
+  // Not including Message Byte
+  responseBuffer.writeInt32BE(messageLength - 1, serverResponseBufferOffset);
+  serverResponseBufferOffset += 4;
+  // SASL challenge specific mechanism
+  responseBuffer.writeInt32BE(11, serverResponseBufferOffset);
+  serverResponseBufferOffset += 4;
+  responseBuffer.write(message, serverResponseBufferOffset);
 
   return {
     responseBuffer,
+    responseNonce,
+    clientNonce,
+    salt,
   };
 }
 

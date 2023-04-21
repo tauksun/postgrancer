@@ -11,6 +11,9 @@ interface auth {
    * 3 - Sent final sasl message
    */
   stage: number;
+  responseNonceContinue?: string;
+  clientNonceContinue?: string;
+  saltContinue?: string;
 }
 
 interface IpostgranceClientSocket extends Socket {

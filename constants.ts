@@ -11,6 +11,10 @@ const version: string | undefined = environmentVariables.version;
 const protocol: number =
   (environmentVariables.protocol && parseInt(environmentVariables.protocol)) ||
   defaults.protocol;
+const scramIterations: number =
+  (environmentVariables.scramIterations &&
+    parseInt(environmentVariables.scramIterations)) ||
+  defaults.scramIterations;
 
 // Primary
 const primaryDatabaseHost: string =
@@ -53,6 +57,7 @@ const clientServerHost: string =
 const constants = {
   version,
   protocol,
+  scramIterations,
   primaryDatabaseHost,
   primaryDatabasePort,
   primaryDatabaseConnectionPool,

@@ -1,5 +1,6 @@
 // Postgres Protocol
 const protocol = 196608;
+const scramIterations = 4096;
 
 // Primary DB
 const primaryDatabaseConnectionPool = 20;
@@ -25,6 +26,7 @@ const clientServerHost = "localhost";
 
 const defaults = {
   protocol,
+  scramIterations,
   primaryDatabaseConnectionPool,
   replicaDatabaseConnectionPool,
   client_encoding,
