@@ -5,6 +5,7 @@ import {
 } from "../authentication";
 import { identifier } from "../query-handler";
 import { IpostgranceDBSocket } from "./interface";
+import { sessionById } from "./session";
 
 function dataHandler(params: {
   data: Buffer;
@@ -79,6 +80,11 @@ function dataHandler(params: {
           data,
           _postgrancerDBConnectionData: connectionData,
         });
+        // Add to connection pool
+        const connectionId = dbConnection.id;
+        if (connectionId) {
+          sessionById[connectionId].connectionPool.push(dbConnection);
+        }
       }
 
       if (!stage) {
@@ -94,7 +100,12 @@ function dataHandler(params: {
 
     default:
       // Write to client socket
-      // Destroy connection if socket doesn't exits
+      const clientSocketConnection =
+        dbConnection._postgrancerDBConnectionData &&
+        dbConnection._postgrancerDBConnectionData?.clientSocketConnection;
+      if (clientSocketConnection) {
+        clientSocketConnection.write(data);
+      }
       break;
   }
 }

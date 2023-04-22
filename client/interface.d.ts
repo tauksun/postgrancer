@@ -1,6 +1,6 @@
 import { Socket } from "net";
 
-interface auth {
+interface Iauth {
   id?: string;
   isAuthenticated: boolean;
   /**
@@ -16,8 +16,11 @@ interface auth {
   saltContinue?: string;
 }
 
+type IprevDbId = string;
+
 interface IpostgranceClientSocket extends Socket {
-  auth?: auth;
+  auth?: Iauth;
+  prevDbId?: IprevDbId;
 }
 
 export { IpostgranceClientSocket };
