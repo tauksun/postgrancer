@@ -1,6 +1,8 @@
 import { _IpostgrancerDBConnectionData } from "../../database/interface";
 import crypto from "crypto";
 import constants from "../../constants";
+import { sha256, hmacSha256, xorBuffers } from "../../utils";
+
 function continueSaslSession(params: {
   data: Buffer;
   _postgrancerDBConnectionData: _IpostgrancerDBConnectionData;
@@ -54,7 +56,7 @@ function continueSaslSession(params: {
     );
   }
   const iteration = parseInt(iterationText, 10);
-  
+
   const clientNonce = params._postgrancerDBConnectionData.clientNonce;
   if (!clientNonce) {
     throw new Error("clientNonce is empty for dbConnection");
@@ -113,30 +115,6 @@ function continueSaslSession(params: {
     response,
     responseBuffer,
   };
-}
-
-function sha256(text: Buffer) {
-  return crypto.createHash("sha256").update(text).digest();
-}
-
-function hmacSha256(key: Buffer, msg: string) {
-  return crypto.createHmac("sha256", key).update(msg).digest();
-}
-
-function xorBuffers(a: Buffer, b: Buffer) {
-  if (!Buffer.isBuffer(a)) {
-    throw new TypeError("first argument must be a Buffer");
-  }
-  if (!Buffer.isBuffer(b)) {
-    throw new TypeError("second argument must be a Buffer");
-  }
-  if (a.length !== b.length) {
-    throw new Error("Buffer lengths must match");
-  }
-  if (a.length === 0) {
-    throw new Error("Buffers cannot be empty");
-  }
-  return Buffer.from(a.map((_, i) => a[i] ^ b[i]));
 }
 
 export default continueSaslSession;
