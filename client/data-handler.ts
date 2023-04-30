@@ -114,6 +114,54 @@ async function dataHandler(data: Buffer, socket: IpostgranceClientSocket) {
   console.log({ strData: data.toString(), messageType });
 
   let dbPoolType: "primary" | "replica" = "primary";
+  const extendedQueryCommands: string[] = ["bindCommand", "execute", "sync"];
+
+  if (messageType === "parseCommand") {
+    socket.isExtendedQuery = true;
+    const extendedQueryWaitingTimeInSeconds = 3;
+    // Based on extended query start timestamp
+    // if query doesn't complete within 3 seconds
+    // (extendedQueryWaitingTimeInSeconds):
+    // 1. terminate this socket connection
+    // 2. unblock dbConnection  & reset
+    socket.extendedQueryTimestamp = new Date().getTime();
+    const checkExtendedQuery = () => {
+      setTimeout(() => {
+        if (!socket) {
+          return;
+        }
+        const isExtendedQuery = socket.isExtendedQuery;
+        const extendedQueryTimestamp = socket.extendedQueryTimestamp;
+        const now = new Date().getTime();
+        if (!extendedQueryTimestamp) {
+          return destroyAndClearSocket(socket);
+        }
+        if (isExtendedQuery) {
+          if (
+            now - extendedQueryTimestamp >
+            extendedQueryWaitingTimeInSeconds * 1000
+          ) {
+            // Terminate this socket
+            destroyAndClearSocket(socket);
+          } else {
+            // For multiple binds statements following parse statement
+            checkExtendedQuery();
+          }
+        }
+      }, extendedQueryWaitingTimeInSeconds * 1000);
+    };
+    checkExtendedQuery();
+  } else if (!extendedQueryCommands.includes(messageType)) {
+    // This marks isExtendedQuery as false when
+    // a command other than extended query related command follows
+    // the socket connection.
+
+    // This ensures that client can send multiple bind statements
+    // after a parse statement which keep the isExtendedQuery as true
+    socket.isExtendedQuery = false;
+    socket.parseCommandDbConnection = null;
+
+  }
 
   if (["simpleQuery", "parseCommand"].includes(messageType)) {
     // Parse Message > for select type statement > set dbPoolType to replica
@@ -121,6 +169,7 @@ async function dataHandler(data: Buffer, socket: IpostgranceClientSocket) {
     // ...dbPoolType to replica
     // Following bind message after a parseCommand message must go to...
     // ...same db (which parseCommand message was sent to)
+    // ...same db socket connection (which parseCommand message was sent to)
     const parsedMessageResult = await messageParser(data);
     const parsedMessageData = parsedMessageResult.data;
 
@@ -154,6 +203,7 @@ async function dataHandler(data: Buffer, socket: IpostgranceClientSocket) {
   // Set clientSocketConnection on fetched dbConnection
   let dbConnection = null;
   if (messageType === "terminate") {
+    destroyAndClearSocket(socket);
     return;
   } else if (messageType === "bindCommand") {
     // Following bind message after a parseCommand message must go to...
@@ -171,7 +221,33 @@ async function dataHandler(data: Buffer, socket: IpostgranceClientSocket) {
       return destroyAndClearSocket(socket);
     } else {
       dbConnection = getDatabaseConnection({ id: dbId });
+  }
+
+  if (socket.isExtendedQuery && extendedQueryCommands.includes(messageType)) {
+    // Following bind/execute/sync message after a parseCommand message
+    // must go to same dbConnection (which parseCommand message was sent to)
+
+    if (messageType === "bindCommand") {
+      // This increases the time for a extended query
+      // if the client issues mulitple bind statement
+      // after a parse command
+      // This helps in clearing socket & unblocking
+      // dbConnection incase of a incomplete extended query
+      // after extendedQueryWaitingTimeInSeconds time
+      socket.extendedQueryTimestamp = new Date().getTime();
     }
+
+    let dbConnection = null;
+    const commandData = data;
+    const attachSameConnection = () => {
+      dbConnection = socket.parseCommandDbConnection;
+      if (dbConnection) {
+        dbConnection.write(commandData);
+      } else {
+        setTimeout(attachSameConnection);
+      }
+    };
+    setTimeout(attachSameConnection);
   } else {
     // Fetching a new connection //
     if (dbPoolType === "primary") {
@@ -187,12 +263,24 @@ async function dataHandler(data: Buffer, socket: IpostgranceClientSocket) {
       console.log("//...........................................//");
       dbConnection = getDatabaseConnection({ type: "replica" });
     }
-  }
   console.log({ idOfDBConnectoin: dbConnection?.id });
   if (dbConnection) {
     socket.prevDbId = dbConnection.id;
     if (dbConnection._postgrancerDBConnectionData) {
       dbConnection._postgrancerDBConnectionData.clientSocketConnection = socket;
+
+    if (dbConnection) {
+      socket.prevDbId = dbConnection.id;
+      // Store dbConnection used for parseCommand, as it is
+      // to be used for bindCommand
+      if (messageType === "parseCommand") {
+        socket.parseCommandDbConnection = dbConnection;
+      }
+      if (dbConnection._postgrancerDBConnectionData) {
+        dbConnection._postgrancerDBConnectionData.clientSocketConnection =
+          socket;
+      }
+      dbConnection.write(data);
     }
     dbConnection.write(data);
   }

@@ -1,4 +1,5 @@
 import { Socket } from "net";
+import { IpostgranceDBSocket } from "../database/interface";
 
 interface Iauth {
   id?: string;
@@ -17,10 +18,14 @@ interface Iauth {
 }
 
 type IprevDbId = string;
+type IparseCommandDbConnection = IpostgranceDBSocket | null;
 
 interface IpostgranceClientSocket extends Socket {
   auth?: Iauth;
   prevDbId?: IprevDbId;
+  isExtendedQuery?: boolean;
+  extendedQueryTimestamp?: number;
+  parseCommandDbConnection?: IparseCommandDbConnection;
 }
 
 export { IpostgranceClientSocket };
