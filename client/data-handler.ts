@@ -168,35 +168,15 @@ async function dataHandler(data: Buffer, socket: IpostgranceClientSocket) {
     // For a parseCommand message > for select type statement > set...
     // ...dbPoolType to replica
     // Following bind message after a parseCommand message must go to...
-    // ...same db (which parseCommand message was sent to)
     // ...same db socket connection (which parseCommand message was sent to)
     const parsedMessageResult = await messageParser(data);
     const parsedMessageData = parsedMessageResult.data;
-
-    ///////////////////////////////////////////
-    ///////////////////////////////////////////
-    console.log({
-      data,
-      strData: data.toString(),
-      parsedMessageResult: JSON.stringify(parsedMessageResult),
-      parsedMessageData: JSON.stringify(parsedMessageData),
-    });
-    ///////////////////////////////////////////
-    ///////////////////////////////////////////
 
     // Is-A-Select-Query
     const isSelect = isSelectStatment(parsedMessageData);
     if (isSelect) {
       dbPoolType = "replica";
     }
-
-    ///////////////////////////////////////////
-    ///////////////////////////////////////////
-    console.log({
-      isSelect,
-    });
-    ///////////////////////////////////////////
-    ///////////////////////////////////////////
   }
 
   // Fetch dbConnection from selected pool
@@ -205,22 +185,6 @@ async function dataHandler(data: Buffer, socket: IpostgranceClientSocket) {
   if (messageType === "terminate") {
     destroyAndClearSocket(socket);
     return;
-  } else if (messageType === "bindCommand") {
-    // Following bind message after a parseCommand message must go to...
-    // ...same db (which parseCommand message was sent to)
-    // //////////////////////////////////////
-    // //////////////////////////////////////
-    console.log("\n\n\n----- Using same db as used by parse command -----");
-    console.log(" => prevDbId : ", socket.prevDbId);
-    console.log("------------------------------ \n\n\n");
-    // //////////////////////////////////////
-    // //////////////////////////////////////
-    // //////////////////////////////////////
-    const dbId = socket.prevDbId;
-    if (!dbId) {
-      return destroyAndClearSocket(socket);
-    } else {
-      dbConnection = getDatabaseConnection({ id: dbId });
   }
 
   if (socket.isExtendedQuery && extendedQueryCommands.includes(messageType)) {
@@ -252,22 +216,11 @@ async function dataHandler(data: Buffer, socket: IpostgranceClientSocket) {
     // Fetching a new connection //
     if (dbPoolType === "primary") {
       // Fetch from primary connection pool
-      console.log("//...........................................//");
-      console.log("=== > Fetching from  : ", { dbPoolType }, " < ===");
-      console.log("//...........................................//");
       dbConnection = getDatabaseConnection({ type: "primary" });
     } else if (dbPoolType === "replica") {
       // Fetch from replica connection pool
-      console.log("//...........................................//");
-      console.log("=== > Fetching from  : ", { dbPoolType }, " < ===");
-      console.log("//...........................................//");
       dbConnection = getDatabaseConnection({ type: "replica" });
     }
-  console.log({ idOfDBConnectoin: dbConnection?.id });
-  if (dbConnection) {
-    socket.prevDbId = dbConnection.id;
-    if (dbConnection._postgrancerDBConnectionData) {
-      dbConnection._postgrancerDBConnectionData.clientSocketConnection = socket;
 
     if (dbConnection) {
       socket.prevDbId = dbConnection.id;
@@ -282,7 +235,6 @@ async function dataHandler(data: Buffer, socket: IpostgranceClientSocket) {
       }
       dbConnection.write(data);
     }
-    dbConnection.write(data);
   }
 }
 
