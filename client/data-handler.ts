@@ -4,7 +4,7 @@ import {
   finalClientSaslSession,
 } from "../authentication";
 import clearSession from "./clear-session";
-import { IpostgranceClientSocket } from "./interface";
+import { IdbPoolType, IpostgranceClientSocket } from "./interface";
 import session from "./session";
 import {
   identifier,
@@ -113,8 +113,13 @@ async function dataHandler(data: Buffer, socket: IpostgranceClientSocket) {
   const messageType = identifier({ data });
   console.log({ strData: data.toString(), messageType });
 
-  let dbPoolType: "primary" | "replica" = "primary";
-  const extendedQueryCommands: string[] = ["bindCommand", "execute", "sync"];
+  let dbPoolType: IdbPoolType = "primary";
+  const extendedQueryCommands: string[] = [
+    "bindCommand",
+    "execute",
+    "sync",
+    "describe",
+  ];
 
   if (messageType === "parseCommand") {
     socket.isExtendedQuery = true;
@@ -157,10 +162,13 @@ async function dataHandler(data: Buffer, socket: IpostgranceClientSocket) {
     // the socket connection.
 
     // This ensures that client can send multiple bind statements
-    // after a parse statement which keep the isExtendedQuery as true
+    // after a parse statement which keeps the isExtendedQuery as true
     socket.isExtendedQuery = false;
     socket.parseCommandDbConnection = null;
 
+    // Un-lock dbConnection
+    //
+    //
   }
 
   if (["simpleQuery", "parseCommand"].includes(messageType)) {
@@ -213,28 +221,50 @@ async function dataHandler(data: Buffer, socket: IpostgranceClientSocket) {
     };
     setTimeout(attachSameConnection);
   } else {
-    // Fetching a new connection //
-    if (dbPoolType === "primary") {
-      // Fetch from primary connection pool
-      dbConnection = getDatabaseConnection({ type: "primary" });
-    } else if (dbPoolType === "replica") {
-      // Fetch from replica connection pool
-      dbConnection = getDatabaseConnection({ type: "replica" });
-    }
+    //
+    const fetchAndWriteToDbConnection = (params: {
+      socket: IpostgranceClientSocket;
+      dbPoolType: IdbPoolType;
+      dbConnection: any;
+    }) => {
+      const { socket, dbPoolType } = params;
+      let { dbConnection } = params;
+      // Fetching a new connection //
+      dbConnection = getDatabaseConnection({ type: dbPoolType });
 
-    if (dbConnection) {
-      socket.prevDbId = dbConnection.id;
-      // Store dbConnection used for parseCommand, as it is
-      // to be used for bindCommand
-      if (messageType === "parseCommand") {
-        socket.parseCommandDbConnection = dbConnection;
+      if (dbConnection) {
+        socket.prevDbId = dbConnection.id;
+        // Store dbConnection used for parseCommand, as it is
+        // to be used for bindCommand
+        if (messageType === "parseCommand") {
+          socket.parseCommandDbConnection = dbConnection;
+        }
+        if (dbConnection._postgrancerDBConnectionData) {
+          dbConnection._postgrancerDBConnectionData.clientSocketConnection =
+            socket;
+        }
+        // Lock this dbConnection to not be used by other socket queries
+        dbConnection.locked = true;
+        dbConnection.write(data);
+      } else {
+        console.log("**********----------------************");
+        console.log("Not found dbConnection __ timing out ");
+        console.log({ messageType });
+        console.log("*********----------------*************");
+        setTimeout(() => {
+          fetchAndWriteToDbConnection({
+            socket,
+            dbPoolType,
+            dbConnection,
+          });
+        });
       }
-      if (dbConnection._postgrancerDBConnectionData) {
-        dbConnection._postgrancerDBConnectionData.clientSocketConnection =
-          socket;
-      }
-      dbConnection.write(data);
-    }
+    };
+    fetchAndWriteToDbConnection({
+      socket,
+      dbPoolType,
+      dbConnection,
+    });
   }
 }
 

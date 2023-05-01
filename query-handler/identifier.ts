@@ -1,7 +1,11 @@
-function identifier(params: { data: Buffer }): string {
+function identifier(params: {
+  data: Buffer;
+  sender?: "client" | "db";
+}): string {
   let identity = "";
   // Read First message Byte
   const data = params.data;
+  const sender = params.sender || "client";
   if (!data.byteLength) {
     return "";
   }
@@ -18,7 +22,9 @@ function identifier(params: { data: Buffer }): string {
       break;
 
     case "Z":
-      identity = "readyForQuery";
+      if (sender === "db") {
+        identity = "readyForQuery";
+      }
       break;
 
     case "Q":
@@ -43,10 +49,16 @@ function identifier(params: { data: Buffer }): string {
 
     case "E":
       identity = "execute";
+      if (sender === "db") {
+        identity = "errorResponse";
+      }
       break;
 
     case "D":
       identity = "describe";
+      if (sender === "db") {
+        identity = "dataRow";
+      }
       break;
 
     case "d":
@@ -63,10 +75,43 @@ function identifier(params: { data: Buffer }): string {
 
     case "C":
       identity = "close";
+      if (sender === "db") {
+        identity = "commandComplete";
+      }
       break;
 
     case "S":
       identity = "sync";
+      break;
+
+    case "3":
+      if (sender === "db") {
+        identity = "closeComplete";
+      }
+      break;
+
+    case "I":
+      if (sender === "db") {
+        identity = "emptyQueryResponse";
+      }
+      break;
+
+    case "V":
+      if (sender === "db") {
+        identity = "functionCallResponse";
+      }
+      break;
+
+    case "n":
+      if (sender === "db") {
+        identity = "noData";
+      }
+      break;
+
+    case "T":
+      if (sender === "db") {
+        identity = "rowDescription";
+      }
       break;
 
     default:

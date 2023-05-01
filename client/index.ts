@@ -48,4 +48,4 @@ function clientConnectionServer() {
   });
 }
 
-export { clientConnectionServer };
+export { clientConnectionServer, IpostgranceClientSocket };

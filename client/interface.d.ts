@@ -17,6 +17,8 @@ interface Iauth {
   saltContinue?: string;
 }
 
+type IdbPoolType = "primary" | "replica";
+
 type IprevDbId = string;
 type IparseCommandDbConnection = IpostgranceDBSocket | null;
 
@@ -28,4 +30,4 @@ interface IpostgranceClientSocket extends Socket {
   parseCommandDbConnection?: IparseCommandDbConnection;
 }
 
-export { IpostgranceClientSocket };
+export { IpostgranceClientSocket, IdbPoolType };

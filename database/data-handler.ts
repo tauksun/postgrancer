@@ -4,6 +4,7 @@ import {
   initiateSaslMechanism,
 } from "../authentication";
 import { identifier } from "../query-handler";
+import checkAndUnblock from "./check-unblock-connection";
 import { IpostgranceDBSocket } from "./interface";
 import { sessionById } from "./session";
 
@@ -106,6 +107,11 @@ function dataHandler(params: {
       if (clientSocketConnection) {
         clientSocketConnection.write(data);
       }
+      // Check And Unblock database connection on current statement completion
+      checkAndUnblock({
+        data,
+        dbConnection,
+      });
       break;
   }
 }
