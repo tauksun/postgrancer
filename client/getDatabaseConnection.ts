@@ -52,10 +52,9 @@ function getDatabaseConnection(params: { type?: IdbPoolType; id?: string }) {
       }
 
       const currentReplicaId = session.replicas.machinePool[currentReplica];
-
       for (
         let j = 0;
-        j < sessionById[currentReplica].connectionPool.length;
+        j < sessionById[currentReplicaId].connectionPool.length;
         j++
       ) {
         const replicaConnectionPoolCurrent =
@@ -63,7 +62,7 @@ function getDatabaseConnection(params: { type?: IdbPoolType; id?: string }) {
         // Circular Queue //
         if (
           replicaConnectionPoolCurrent + 1 ===
-          sessionById[currentReplica].connectionPool.length
+          sessionById[currentReplicaId].connectionPool.length
         ) {
           sessionById[currentReplicaId].current = 0;
         } else {

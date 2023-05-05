@@ -20,14 +20,14 @@ interface Iauth {
 type IdbPoolType = "primary" | "replica";
 
 type IprevDbId = string;
-type IparseCommandDbConnection = IpostgranceDBSocket | null;
+type IpreviousCommandDbConnection = IpostgranceDBSocket | null;
 
 interface IpostgranceClientSocket extends Socket {
   auth?: Iauth;
   prevDbId?: IprevDbId;
   isExtendedQuery?: boolean;
   extendedQueryTimestamp?: number;
-  parseCommandDbConnection?: IparseCommandDbConnection;
+  previousCommandDbConnection?: IpreviousCommandDbConnection;
 }
 
 export { IpostgranceClientSocket, IdbPoolType };

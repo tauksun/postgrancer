@@ -123,40 +123,16 @@ async function dataHandler(data: Buffer, socket: IpostgranceClientSocket) {
 
   if (messageType === "parseCommand") {
     socket.isExtendedQuery = true;
-    const extendedQueryWaitingTimeInSeconds = 3;
-    // Based on extended query start timestamp
-    // if query doesn't complete within 3 seconds
-    // (extendedQueryWaitingTimeInSeconds):
-    // 1. terminate this socket connection
-    // 2. unblock dbConnection  & reset
-    socket.extendedQueryTimestamp = new Date().getTime();
-    const checkExtendedQuery = () => {
-      setTimeout(() => {
-        if (!socket) {
-          return;
-        }
-        const isExtendedQuery = socket.isExtendedQuery;
-        const extendedQueryTimestamp = socket.extendedQueryTimestamp;
-        const now = new Date().getTime();
-        if (!extendedQueryTimestamp) {
-          return destroyAndClearSocket(socket);
-        }
-        if (isExtendedQuery) {
-          if (
-            now - extendedQueryTimestamp >
-            extendedQueryWaitingTimeInSeconds * 1000
-          ) {
-            // Terminate this socket
-            destroyAndClearSocket(socket);
-          } else {
-            // For multiple binds statements following parse statement
-            checkExtendedQuery();
-          }
-        }
-      }, extendedQueryWaitingTimeInSeconds * 1000);
-    };
-    checkExtendedQuery();
-  } else if (!extendedQueryCommands.includes(messageType)) {
+    // Unlock dbConnection
+    // This unlocks previous dbConnection in case of
+    // more parse/bind commands follow through same socket
+    if (socket.previousCommandDbConnection) {
+      socket.previousCommandDbConnection.locked = false;
+    }
+  } else if (
+    socket.isExtendedQuery &&
+    !extendedQueryCommands.includes(messageType)
+  ) {
     // This marks isExtendedQuery as false when
     // a command other than extended query related command follows
     // the socket connection.
@@ -164,11 +140,11 @@ async function dataHandler(data: Buffer, socket: IpostgranceClientSocket) {
     // This ensures that client can send multiple bind statements
     // after a parse statement which keeps the isExtendedQuery as true
     socket.isExtendedQuery = false;
-    socket.parseCommandDbConnection = null;
-
     // Un-lock dbConnection
-    //
-    //
+    if (socket.previousCommandDbConnection) {
+      socket.previousCommandDbConnection.locked = false;
+    }
+    socket.previousCommandDbConnection = null;
   }
 
   if (["simpleQuery", "parseCommand"].includes(messageType)) {
@@ -203,16 +179,14 @@ async function dataHandler(data: Buffer, socket: IpostgranceClientSocket) {
       // This increases the time for a extended query
       // if the client issues mulitple bind statement
       // after a parse command
-      // This helps in clearing socket & unblocking
-      // dbConnection incase of a incomplete extended query
-      // after extendedQueryWaitingTimeInSeconds time
+
       socket.extendedQueryTimestamp = new Date().getTime();
     }
 
     let dbConnection = null;
     const commandData = data;
     const attachSameConnection = () => {
-      dbConnection = socket.parseCommandDbConnection;
+      dbConnection = socket.previousCommandDbConnection;
       if (dbConnection) {
         dbConnection.write(commandData);
       } else {
@@ -221,7 +195,6 @@ async function dataHandler(data: Buffer, socket: IpostgranceClientSocket) {
     };
     setTimeout(attachSameConnection);
   } else {
-    //
     const fetchAndWriteToDbConnection = (params: {
       socket: IpostgranceClientSocket;
       dbPoolType: IdbPoolType;
@@ -234,10 +207,8 @@ async function dataHandler(data: Buffer, socket: IpostgranceClientSocket) {
 
       if (dbConnection) {
         socket.prevDbId = dbConnection.id;
-        // Store dbConnection used for parseCommand, as it is
-        // to be used for bindCommand
         if (messageType === "parseCommand") {
-          socket.parseCommandDbConnection = dbConnection;
+          socket.previousCommandDbConnection = dbConnection;
         }
         if (dbConnection._postgrancerDBConnectionData) {
           dbConnection._postgrancerDBConnectionData.clientSocketConnection =

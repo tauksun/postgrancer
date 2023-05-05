@@ -3,6 +3,7 @@ import { IpostgranceClientSocket } from "../client";
 
 type IconnectionType = "primary" | "replica";
 type Iid = string;
+type IpreviousBuffer = Buffer | null;
 
 interface _IpostgrancerDBConnectionData {
   clientNonce?: string;
@@ -15,6 +16,7 @@ interface IpostgranceDBSocket extends Socket {
   type?: IconnectionType;
   id?: Iid;
   locked?: boolean;
+  previousBuffer?: IpreviousBuffer;
 }
 
 export { IpostgranceDBSocket, _IpostgrancerDBConnectionData };

@@ -2,8 +2,15 @@ import parser from "libpg-query";
 
 async function messageParser(data: Buffer) {
   const libpgParsedResult: {
-    data: unknown; ////////////////////////////////////////////////////
-  } = { data: {} };
+    data: { result: any; error?: any }[];
+  } = {
+    data: [
+      {
+        result: [],
+        error: null,
+      },
+    ],
+  };
   // Seprate queries into an array
   let offset: number = 0;
   const messageTypeByte: number = data.readInt8(0);
@@ -54,7 +61,7 @@ async function messageParser(data: Buffer) {
 const queryParser = async (
   query: string
 ): Promise<{
-  result?: any;
+  result: any;
   error?: string | unknown;
 }> => {
   try {
@@ -65,10 +72,11 @@ const queryParser = async (
     ////////////////////////////////////
     ////////////////////////////////////
     ////////////////////////////////////
-    return { result };
+    return { result, error: null };
   } catch (error) {
     console.log({ error });
     return {
+      result: null,
       error,
     };
   }
