@@ -24,6 +24,9 @@ const client_encoding: string = "utf8";
 const clientServerPort = 9876;
 const clientServerHost = "localhost";
 
+// Dequeue Request Time
+const dequeue_request_time = 3;
+
 const defaults = {
   protocol,
   scramIterations,
@@ -32,6 +35,7 @@ const defaults = {
   client_encoding,
   clientServerPort,
   clientServerHost,
+  dequeue_request_time,
 };
 
 export default defaults;

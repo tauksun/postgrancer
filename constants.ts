@@ -54,6 +54,11 @@ const clientServerPort: number = environmentVariables.clientServerPort
 const clientServerHost: string =
   environmentVariables.clientServerHost || defaults.clientServerHost;
 
+// Dequeue Request Time
+const dequeue_request_time: number = environmentVariables.dequeue_request_time
+  ? parseInt(environmentVariables.dequeue_request_time)
+  : defaults.dequeue_request_time;
+
 const constants = {
   version,
   protocol,
@@ -70,6 +75,7 @@ const constants = {
   client_encoding,
   clientServerPort,
   clientServerHost,
+  dequeue_request_time,
 };
 
 export default constants;

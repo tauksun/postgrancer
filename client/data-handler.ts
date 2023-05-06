@@ -13,6 +13,7 @@ import {
   readyForQueryMessageBuffer,
 } from "../query-handler";
 import getDatabaseConnection from "./getDatabaseConnection";
+import constants from "../constants";
 
 function destroyAndClearSocket(socket: IpostgranceClientSocket) {
   socket.destroy();
@@ -195,6 +196,10 @@ async function dataHandler(data: Buffer, socket: IpostgranceClientSocket) {
     };
     setTimeout(attachSameConnection);
   } else {
+    // Statement Arrival Timestamp
+    const arrivalTimestamp: number = new Date().getTime();
+    socket.arrivalTimestamp = arrivalTimestamp;
+
     const fetchAndWriteToDbConnection = (params: {
       socket: IpostgranceClientSocket;
       dbPoolType: IdbPoolType;
@@ -202,6 +207,28 @@ async function dataHandler(data: Buffer, socket: IpostgranceClientSocket) {
     }) => {
       const { socket, dbPoolType } = params;
       let { dbConnection } = params;
+      // Dequeue request after 'n' secs (set by environment variables)
+      // Dequeue if request takes more than 'n' secs & is in
+      // setTimeout queue trying to get dbConnection
+      const now = new Date().getTime();
+      const dequeue_request_time_in_milliseconds =
+        constants.dequeue_request_time * 1000;
+      if (!socket.arrivalTimestamp) {
+        if (socket.timeoutQueueID) {
+          clearTimeout(socket.timeoutQueueID);
+        }
+        return destroyAndClearSocket(socket);
+      }
+      if (
+        now - socket.arrivalTimestamp >
+        dequeue_request_time_in_milliseconds
+      ) {
+        if (socket.timeoutQueueID) {
+          clearTimeout(socket.timeoutQueueID);
+          return destroyAndClearSocket(socket);
+        }
+      }
+
       // Fetching a new connection //
       dbConnection = getDatabaseConnection({ type: dbPoolType });
 
@@ -222,13 +249,14 @@ async function dataHandler(data: Buffer, socket: IpostgranceClientSocket) {
         console.log("Not found dbConnection __ timing out ");
         console.log({ messageType });
         console.log("*********----------------*************");
-        setTimeout(() => {
+        const timeoutId = setTimeout(() => {
           fetchAndWriteToDbConnection({
             socket,
             dbPoolType,
             dbConnection,
           });
         });
+        socket.timeoutQueueID = timeoutId;
       }
     };
     fetchAndWriteToDbConnection({

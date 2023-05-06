@@ -21,6 +21,7 @@ type IdbPoolType = "primary" | "replica";
 
 type IprevDbId = string;
 type IpreviousCommandDbConnection = IpostgranceDBSocket | null;
+type ItimeoutQueueID = Nodejs.Timeout | null;
 
 interface IpostgranceClientSocket extends Socket {
   auth?: Iauth;
@@ -28,6 +29,8 @@ interface IpostgranceClientSocket extends Socket {
   isExtendedQuery?: boolean;
   extendedQueryTimestamp?: number;
   previousCommandDbConnection?: IpreviousCommandDbConnection;
+  arrivalTimestamp?: number;
+  timeoutQueueID?: ItimeoutQueueID;
 }
 
 export { IpostgranceClientSocket, IdbPoolType };
