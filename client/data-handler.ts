@@ -14,6 +14,7 @@ import {
 } from "../query-handler";
 import getDatabaseConnection from "./getDatabaseConnection";
 import constants from "../constants";
+import log from "./logger";
 
 function destroyAndClearSocket(socket: IpostgranceClientSocket) {
   socket.destroy();
@@ -243,6 +244,7 @@ async function dataHandler(data: Buffer, socket: IpostgranceClientSocket) {
         }
         // Lock this dbConnection to not be used by other socket queries
         dbConnection.locked = true;
+        log({ data, dbPoolType });
         dbConnection.write(data);
       } else {
         console.log("**********----------------************");

@@ -27,6 +27,13 @@ const clientServerHost = "localhost";
 // Dequeue Request Time
 const dequeue_request_time = 3;
 
+// logger
+const logger = true;
+// Logging frequency (minute/hour/day) : Creates new log file
+// as set by frequency, defaults to hour
+const logFrequency = "hour";
+const validLogFrequencies = ["minute", "hour", "day"];
+
 const defaults = {
   protocol,
   scramIterations,
@@ -36,6 +43,9 @@ const defaults = {
   clientServerPort,
   clientServerHost,
   dequeue_request_time,
+  logger,
+  logFrequency,
+  validLogFrequencies,
 };
 
 export default defaults;

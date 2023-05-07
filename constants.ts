@@ -59,6 +59,16 @@ const dequeue_request_time: number = environmentVariables.dequeue_request_time
   ? parseInt(environmentVariables.dequeue_request_time)
   : defaults.dequeue_request_time;
 
+// logger
+const logger = environmentVariables.logger == "false" ? false : defaults.logger;
+// Logging frequency (minute/hour/day)
+const validLogFrequencies = defaults.validLogFrequencies;
+const logFrequency = validLogFrequencies.includes(
+  environmentVariables.logFrequency || ""
+)
+  ? environmentVariables.logFrequency
+  : defaults.logFrequency;
+
 const constants = {
   version,
   protocol,
@@ -76,6 +86,8 @@ const constants = {
   clientServerPort,
   clientServerHost,
   dequeue_request_time,
+  logger,
+  logFrequency,
 };
 
 export default constants;
