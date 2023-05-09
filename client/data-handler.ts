@@ -245,6 +245,7 @@ async function dataHandler(data: Buffer, socket: IpostgranceClientSocket) {
         // Lock this dbConnection to not be used by other socket queries
         dbConnection.locked = true;
         log({ data, dbPoolType });
+        dbConnection.lockedAt = new Date().getTime();
         dbConnection.write(data);
       } else {
         console.log("**********----------------************");

@@ -69,6 +69,19 @@ const logFrequency = validLogFrequencies.includes(
   ? environmentVariables.logFrequency
   : defaults.logFrequency;
 
+// Pool Manager
+const maxDbConnectionLockTime = environmentVariables.maxDbConnectionLockTime
+  ? parseInt(environmentVariables.maxDbConnectionLockTime)
+  : defaults.maxDbConnectionLockTime;
+
+const maxLastWroteTime = environmentVariables.maxLastWroteTime
+  ? parseInt(environmentVariables.maxLastWroteTime)
+  : defaults.maxLastWroteTime;
+
+const poolManagerLoopTime = environmentVariables.poolManagerLoopTime
+  ? parseInt(environmentVariables.poolManagerLoopTime)
+  : defaults.poolManagerLoopTime;
+
 const constants = {
   version,
   protocol,
@@ -88,6 +101,9 @@ const constants = {
   dequeue_request_time,
   logger,
   logFrequency,
+  maxDbConnectionLockTime,
+  maxLastWroteTime,
+  poolManagerLoopTime,
 };
 
 export default constants;

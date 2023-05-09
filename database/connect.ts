@@ -6,7 +6,7 @@ const connectToDB = (options: {
   port: number;
 }): Promise<IpostgranceDBSocket> => {
   return new Promise((resolve, reject) => {
-    const dbConnection = net.createConnection({
+    const dbConnection: IpostgranceDBSocket = net.createConnection({
       host: options.host,
       port: options.port,
     });

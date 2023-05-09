@@ -4,6 +4,7 @@ import { initiateAuthSession } from "../authentication";
 import { v4 } from "uuid";
 import { session, sessionById } from "./session";
 import { IpostgranceDBSocket } from "./interface";
+import poolManager from "./pool-manager";
 
 async function establishPrimaryDatabaseConnections() {
   const host = constants.primaryDatabaseHost;
@@ -11,12 +12,14 @@ async function establishPrimaryDatabaseConnections() {
 
   const primaryId = v4();
   session.primary = primaryId;
+
+  const connectionPool = constants.primaryDatabaseConnectionPool;
   sessionById[primaryId] = {
     current: 0,
     connectionPool: [],
+    maxConnections: connectionPool,
   };
 
-  const connectionPool = constants.primaryDatabaseConnectionPool;
   for (let i = 0; i < connectionPool; i++) {
     try {
       const primaryConnection: IpostgranceDBSocket = await connectToDB({
@@ -66,6 +69,7 @@ async function establishReplicasDatabaseConnections() {
     sessionById[replicaId] = {
       current: 0,
       connectionPool: [],
+      maxConnections: replicaConnectionPool[i],
     };
 
     for (let j = 0; j < replicaConnectionPool[i]; j++) {
@@ -102,6 +106,7 @@ async function establishReplicasDatabaseConnections() {
 function establishDatabaseConnections() {
   establishPrimaryDatabaseConnections();
   establishReplicasDatabaseConnections();
+  poolManager();
 }
 
 export { establishDatabaseConnections };

@@ -17,6 +17,8 @@ interface IpostgranceDBSocket extends Socket {
   id?: Iid;
   locked?: boolean;
   previousBuffer?: IpreviousBuffer;
+  lockedAt?: number;
+  lastWriteAt?: number;
 }
 
-export { IpostgranceDBSocket, _IpostgrancerDBConnectionData };
+export { IpostgranceDBSocket, _IpostgrancerDBConnectionData, IconnectionType };

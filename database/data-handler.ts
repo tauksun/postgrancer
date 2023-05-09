@@ -105,6 +105,7 @@ function dataHandler(params: {
         dbConnection._postgrancerDBConnectionData &&
         dbConnection._postgrancerDBConnectionData?.clientSocketConnection;
       if (clientSocketConnection) {
+        dbConnection.lastWriteAt = new Date().getTime();
         clientSocketConnection.write(data);
       }
       // Check And Unblock database connection on current statement completion

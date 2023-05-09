@@ -34,6 +34,11 @@ const logger = true;
 const logFrequency = "hour";
 const validLogFrequencies = ["minute", "hour", "day"];
 
+// Pool Manager
+const maxDbConnectionLockTime = 10;
+const maxLastWroteTime = 3;
+const poolManagerLoopTime = 10;
+
 const defaults = {
   protocol,
   scramIterations,
@@ -46,6 +51,9 @@ const defaults = {
   logger,
   logFrequency,
   validLogFrequencies,
+  maxDbConnectionLockTime,
+  maxLastWroteTime,
+  poolManagerLoopTime,
 };
 
 export default defaults;

@@ -8,6 +8,7 @@ const sessionById: {
   [id: string]: {
     current: number;
     connectionPool: IpostgranceDBSocket[];
+    maxConnections: number;
   };
 } = {};
 
