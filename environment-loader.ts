@@ -6,7 +6,7 @@ function envLoader(params: { path: string }) {
   try {
     const pathToCustomEnv: string = params.path;
 
-    const basePath: string = __dirname;
+    const basePath: string = process.cwd();
 
     const pathToEnv: string = path.join(basePath, pathToCustomEnv);
 

@@ -1,9 +1,24 @@
-import { appendFile } from "fs";
+import { appendFile, existsSync, mkdirSync } from "fs";
 import path from "path";
 import constants from "../constants";
 import { IdbPoolType } from "./interface";
 
 const { logger, logFrequency } = constants;
+
+const cwd = process.cwd();
+const logsDirectory = path.join(cwd, "/logs");
+
+// Check & create directory for logs
+if (logger) {
+  const isDirExists = existsSync(logsDirectory);
+  if (!isDirExists) {
+    console.log("Creating directory for logs...");
+    mkdirSync(logsDirectory);
+    console.log("Logs Directory : ", logsDirectory);
+  } else {
+    console.log("Logs directory already exits : ", logsDirectory);
+  }
+}
 
 function log(params: { data: Buffer; dbPoolType: IdbPoolType }) {
   if (!logger) {
@@ -45,7 +60,7 @@ Data : ${data.toString()}
 \n----- END -----\n
 `;
 
-  const filePath = path.join(__dirname, `../logs/${fileName}`);
+  const filePath = path.join(logsDirectory, `${fileName}`);
   appendFile(filePath, fileData, (error) => {
     if (error) {
       console.log("Error while logging : ", { error });

@@ -7,6 +7,15 @@
     "dev": "nodemon index.ts",
     "test": ""
   },
+  "bin": "index.js",
+  "pkg": {
+    "assets": [
+      "./**/*"
+    ],
+    "targets": [
+      "latest"
+    ]
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/tauksun/postgrancer.git"
