@@ -13,12 +13,15 @@ interface _IpostgrancerDBConnectionData {
 
 interface IpostgranceDBSocket extends Socket {
   _postgrancerDBConnectionData?: _IpostgrancerDBConnectionData;
+  host?: string;
+  port?: number;
   type?: IconnectionType;
   id?: Iid;
   locked?: boolean;
   previousBuffer?: IpreviousBuffer;
   lockedAt?: number;
   lastWriteAt?: number;
+  watchDogConnection?: boolean;
 }
 
 export { IpostgranceDBSocket, _IpostgrancerDBConnectionData, IconnectionType };

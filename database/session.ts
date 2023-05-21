@@ -20,11 +20,29 @@ const session: {
     current: number;
     machinePool: string[];
   };
+  watchDog: {
+    primary: {
+      [key: string]: {
+        lastHealthCheckTimestamp: number;
+        dbConnection: IpostgranceDBSocket;
+      };
+    };
+    replicas: {
+      [key: string]: {
+        lastHealthCheckTimestamp: number;
+        dbConnection: IpostgranceDBSocket;
+      };
+    };
+  };
 } = {
   primary: "",
   replicas: {
     current: 0,
     machinePool: [],
+  },
+  watchDog: {
+    primary: {},
+    replicas: {},
   },
 };
 

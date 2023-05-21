@@ -1,7 +1,7 @@
 import { session, sessionById } from "../database/session";
 import { IdbPoolType } from "./interface";
 function getDatabaseConnection(params: { type?: IdbPoolType; id?: string }) {
-  const connType = params.type;
+  let connType = params.type;
   const id = params.id || null;
 
   if (id) {
@@ -14,6 +14,15 @@ function getDatabaseConnection(params: { type?: IdbPoolType; id?: string }) {
     }
     const connection = sessionById[id].connectionPool[current];
     return connection;
+  }
+
+  // If there is no replica
+  // Redirect all traffic to Primary
+  // This can happen :
+  // 1. if there is no replica configured
+  // 2. if all replicas are down
+  if (!session.replicas.machinePool.length) {
+    connType = "primary";
   }
 
   if (connType === "primary") {

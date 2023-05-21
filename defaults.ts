@@ -39,6 +39,12 @@ const maxDbConnectionLockTime = 10;
 const maxLastWroteTime = 3;
 const poolManagerLoopTime = 10;
 
+// Watch Dog
+// Time (seconds) interval to check for database health
+const watchDogLoopTime = 5;
+// Time (seconds) before promoting or removing replica
+const watchDogWaitTime = 15;
+
 const defaults = {
   protocol,
   scramIterations,
@@ -54,6 +60,8 @@ const defaults = {
   maxDbConnectionLockTime,
   maxLastWroteTime,
   poolManagerLoopTime,
+  watchDogLoopTime,
+  watchDogWaitTime,
 };
 
 export default defaults;

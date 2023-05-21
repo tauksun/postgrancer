@@ -1,10 +1,10 @@
 import connectToDB from "./connect";
 import constants from "../constants";
-import { initiateAuthSession } from "../authentication";
 import { v4 } from "uuid";
 import { session, sessionById } from "./session";
 import { IpostgranceDBSocket } from "./interface";
 import poolManager from "./pool-manager";
+import watchDog from "./watchdog";
 
 async function establishPrimaryDatabaseConnections() {
   const host = constants.primaryDatabaseHost;
@@ -13,7 +13,9 @@ async function establishPrimaryDatabaseConnections() {
   const primaryId = v4();
   session.primary = primaryId;
 
-  const connectionPool = constants.primaryDatabaseConnectionPool;
+  let connectionPool = constants.primaryDatabaseConnectionPool;
+  // One connection out of 100 is reserved for watchdog
+  connectionPool = connectionPool > 99 ? 99 : connectionPool;
   sessionById[primaryId] = {
     current: 0,
     connectionPool: [],
@@ -22,84 +24,107 @@ async function establishPrimaryDatabaseConnections() {
 
   for (let i = 0; i < connectionPool; i++) {
     try {
-      const primaryConnection: IpostgranceDBSocket = await connectToDB({
+      await connectToDB({
+        type: "primary",
+        id: primaryId,
         host,
         port,
       });
-
-      primaryConnection.type = "primary";
-      primaryConnection.id = primaryId;
-      //-----------------------------------------------
-      console.log(
-        `Sending Intiate Auth Query Primary with id : ${primaryId} ....`
-      );
-      //-----------------------------------------------
-      const authBuffer = initiateAuthSession();
-      primaryConnection.write(authBuffer);
     } catch (error) {
-      //////////////////
-      //////////////////
       //////////////////
       console.log("Error occured while connection to Primary database : ", {
         error,
       });
       //////////////////
-      //////////////////
-      //////////////////
-      //////////////////
     }
   }
+
+  //Watchdog Primary DB Connection
+
+  const watchDogPrimaryConnection: IpostgranceDBSocket = await connectToDB({
+    type: "primary",
+    id: primaryId,
+    host,
+    port,
+  });
+
+  const now = new Date().getTime();
+  watchDogPrimaryConnection.watchDogConnection = true;
+  session.watchDog.primary = {
+    [primaryId]: {
+      lastHealthCheckTimestamp: now,
+      dbConnection: watchDogPrimaryConnection,
+    },
+  };
 }
 
 async function establishReplicasDatabaseConnections() {
-  const replicaDatabaseHosts = constants.replicaDatabaseHosts;
-  const replicaDatabasePorts = constants.replicaDatabasePorts;
-  const replicaConnectionPool = constants.replicaDatabaseConnectionPool;
-  if (replicaDatabaseHosts.length !== replicaDatabasePorts.length) {
-    throw `Number of replica hosts do not match with ports.
+  try {
+    const replicaDatabaseHosts = constants.replicaDatabaseHosts;
+    const replicaDatabasePorts = constants.replicaDatabasePorts;
+    const replicaConnectionPool = constants.replicaDatabaseConnectionPool;
+    if (replicaDatabaseHosts.length !== replicaDatabasePorts.length) {
+      throw `Number of replica hosts do not match with ports.
     Hosts : ${replicaDatabaseHosts}, 
     Ports : ${replicaDatabasePorts}`;
-  }
-  for (let i = 0; i < replicaDatabaseHosts.length; i++) {
-    const host = replicaDatabaseHosts[i];
-    const port = replicaDatabasePorts[i];
-
-    const replicaId = v4();
-    session.replicas.machinePool.push(replicaId);
-    sessionById[replicaId] = {
-      current: 0,
-      connectionPool: [],
-      maxConnections: replicaConnectionPool[i],
-    };
-
-    for (let j = 0; j < replicaConnectionPool[i]; j++) {
-      try {
-        const replicaConnection = await connectToDB({ host, port });
-        replicaConnection.type = "replica";
-        replicaConnection.id = replicaId;
-        //-----------------------------------------------
-        console.log(
-          `Sending Intiate Auth Query Replica : ${i} id : ${replicaId} ....`
-        );
-        //-----------------------------------------------
-        const authBuffer = initiateAuthSession();
-        replicaConnection.write(authBuffer);
-      } catch (error) {
-        //////////////////
-        //////////////////
-        //////////////////
-        console.log(
-          `Error occured while connection to replica database : ${i} `,
-          {
-            error,
-          }
-        );
-        //////////////////
-        //////////////////
-        //////////////////
-        //////////////////
-      }
     }
+    for (let i = 0; i < replicaDatabaseHosts.length; i++) {
+      const host = replicaDatabaseHosts[i];
+      const port = replicaDatabasePorts[i];
+
+      const replicaId = v4();
+      session.replicas.machinePool.push(replicaId);
+      sessionById[replicaId] = {
+        current: 0,
+        connectionPool: [],
+        maxConnections: replicaConnectionPool[i],
+      };
+
+      let connectionPool = replicaConnectionPool[i];
+      // One connection out of 100 is reserved for watchdog
+      connectionPool = connectionPool > 99 ? 99 : connectionPool;
+
+      for (let j = 0; j < connectionPool; j++) {
+        try {
+          await connectToDB({
+            type: "replica",
+            id: replicaId,
+            host,
+            port,
+          });
+        } catch (error) {
+          //////////////////
+          console.log(
+            `Error occured while connection to replica database : ${i} `,
+            {
+              error,
+            }
+          );
+          //////////////////
+        }
+      }
+
+      //Watchdog Replica DB Connection
+
+      const watchDogReplicaConnection: IpostgranceDBSocket = await connectToDB({
+        type: "replica",
+        id: replicaId,
+        host,
+        port,
+      });
+
+      const now = new Date().getTime();
+      watchDogReplicaConnection.watchDogConnection = true;
+      session.watchDog.replicas = {
+        [replicaId]: {
+          lastHealthCheckTimestamp: now,
+          dbConnection: watchDogReplicaConnection,
+        },
+      };
+    }
+  } catch (error) {
+    console.log("Error : ", error);
+    process.exit(1);
   }
 }
 
@@ -107,6 +132,7 @@ function establishDatabaseConnections() {
   establishPrimaryDatabaseConnections();
   establishReplicasDatabaseConnections();
   poolManager();
+  setTimeout(watchDog, 5000);
 }
 
 export { establishDatabaseConnections };

@@ -83,7 +83,9 @@ function dataHandler(params: {
         });
         // Add to connection pool
         const connectionId = dbConnection.id;
-        if (connectionId) {
+        // Do not add watchDog database connection to the pool
+        // This is a reserved connection to be used only for healthcheck
+        if (connectionId && !dbConnection.watchDogConnection) {
           sessionById[connectionId].connectionPool.push(dbConnection);
         }
       }

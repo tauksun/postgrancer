@@ -82,6 +82,14 @@ const poolManagerLoopTime = environmentVariables.poolManagerLoopTime
   ? parseInt(environmentVariables.poolManagerLoopTime)
   : defaults.poolManagerLoopTime;
 
+// Watch Dog
+const watchDogLoopTime: number = environmentVariables.watchDogLoopTime
+  ? parseInt(environmentVariables.watchDogLoopTime)
+  : defaults.watchDogLoopTime;
+const watchDogWaitTime: number = environmentVariables.watchDogWaitTime
+  ? parseInt(environmentVariables.watchDogWaitTime)
+  : defaults.watchDogWaitTime;
+
 const constants = {
   version,
   protocol,
@@ -104,6 +112,8 @@ const constants = {
   maxDbConnectionLockTime,
   maxLastWroteTime,
   poolManagerLoopTime,
+  watchDogLoopTime,
+  watchDogWaitTime,
 };
 
 export default constants;

@@ -1,4 +1,5 @@
 import { IpostgranceDBSocket } from "./interface";
+import { session } from "./session";
 
 function checkAndUnblock(params: {
   data: Buffer;
@@ -98,6 +99,15 @@ function checkAndUnblock(params: {
       noData
     ) {
       dbConnection.locked = false;
+      // Update time on watchdog Database Connection
+      if (dbConnection.watchDogConnection) {
+        const { type, id } = dbConnection;
+        if (type && id) {
+          const now = new Date().getTime();
+          const watchDogType = type === "replica" ? "replicas" : type;
+          session.watchDog[watchDogType][id].lastHealthCheckTimestamp = now;
+        }
+      }
     }
   } else {
     if (
@@ -107,7 +117,7 @@ function checkAndUnblock(params: {
       noData ||
       emptyQueryResponse
     ) {
-      dbConnection.locked = false;
+      dbConnection.locked = false; 
     }
   }
 }
