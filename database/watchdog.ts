@@ -16,6 +16,15 @@ async function healthCheck(dbConnection: IpostgranceDBSocket, dbType: string) {
 }
 
 function promoteReplica() {
+  const { enableFailover } = constants;
+
+  if (!enableFailover) {
+    console.log("Failover is disabled. Not promoting replica to primary");
+    return;
+  }
+
+  // Begin Promoting
+  isPromotionInProgress = true;
   const { replicaPromotionHost, replicaPromotionPort } = constants;
   // Make Promote Query
   const query = "select pg_promote();";
