@@ -119,6 +119,8 @@ async function establishReplicasDatabaseConnections() {
         [replicaId]: {
           lastHealthCheckTimestamp: now,
           dbConnection: watchDogReplicaConnection,
+          host,
+          port,
         },
       };
     }

@@ -45,6 +45,14 @@ const watchDogLoopTime = 5;
 // Time (seconds) before promoting or removing replica
 const watchDogWaitTime = 15;
 
+// Primary Failover
+const enableFailover: boolean = false;
+const replicaPromotionHost: string | null = null;
+const replicaPromotionPort: number | null = null;
+
+const sendFailoverInformation: boolean = false;
+const failoverInformationEndpoint: string | null = null;
+
 const defaults = {
   protocol,
   scramIterations,
@@ -62,6 +70,11 @@ const defaults = {
   poolManagerLoopTime,
   watchDogLoopTime,
   watchDogWaitTime,
+  enableFailover,
+  replicaPromotionHost,
+  replicaPromotionPort,
+  sendFailoverInformation,
+  failoverInformationEndpoint,
 };
 
 export default defaults;

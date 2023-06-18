@@ -90,6 +90,58 @@ const watchDogWaitTime: number = environmentVariables.watchDogWaitTime
   ? parseInt(environmentVariables.watchDogWaitTime)
   : defaults.watchDogWaitTime;
 
+// Primary Failover
+const enableFailover: boolean =
+  environmentVariables.enableFailover === "true"
+    ? true
+    : defaults.enableFailover;
+const replicaPromotionHost: string | null =
+  environmentVariables.replicaPromotionHost || defaults.replicaPromotionHost;
+const replicaPromotionPort: number | null =
+  environmentVariables.replicaPromotionPort
+    ? parseInt(environmentVariables.replicaPromotionPort)
+    : defaults.replicaPromotionPort;
+
+const sendFailoverInformation: boolean =
+  environmentVariables.sendFailoverInformation === "true"
+    ? true
+    : defaults.sendFailoverInformation;
+const failoverInformationEndpoint: string | null =
+  environmentVariables.failoverInformationEndpoint ||
+  defaults.failoverInformationEndpoint;
+
+function validateEnvs() {
+  // 1. Promiting replica configuration  must
+  // match the configuration from the replicas
+  if (enableFailover) {
+    if (!replicaPromotionHost) {
+      throw "No replicaPromotionHost configured.";
+    }
+    if (!replicaPromotionPort) {
+      throw "No replicaPromotionPort configured.";
+    }
+    const isHostPresent = replicaDatabaseHosts.includes(replicaPromotionHost);
+    const isPortPresent = replicaDatabasePorts.includes(replicaPromotionPort);
+    if (!isHostPresent) {
+      throw "replicaPromotionHost is not present in replicas.";
+    }
+
+    if (!isPortPresent) {
+      throw "replicaPromotionPort is not present in replica ports.";
+    }
+  }
+
+  // 2. If sendFailoverInformation is true,
+  // failoverInformationEndpoint must be configured
+  if (sendFailoverInformation) {
+    if (!failoverInformationEndpoint) {
+      throw "No failoverInformationEndpoint is configured.";
+    }
+  }
+}
+
+validateEnvs();
+
 const constants = {
   version,
   protocol,
@@ -114,6 +166,11 @@ const constants = {
   poolManagerLoopTime,
   watchDogLoopTime,
   watchDogWaitTime,
+  enableFailover,
+  replicaPromotionHost,
+  replicaPromotionPort,
+  sendFailoverInformation,
+  failoverInformationEndpoint,
 };
 
 export default constants;

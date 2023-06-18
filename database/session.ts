@@ -31,6 +31,9 @@ const session: {
       [key: string]: {
         lastHealthCheckTimestamp: number;
         dbConnection: IpostgranceDBSocket;
+        // This is used while promoting replica
+        host: string;
+        port: number;
       };
     };
   };

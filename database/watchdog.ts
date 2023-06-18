@@ -2,45 +2,89 @@ import constants from "../constants";
 import connectToDB from "./connect";
 import { IpostgranceDBSocket } from "./interface";
 import { sessionById, session } from "./session";
+import { httpRequest, generateQueryBuffer } from "../utils";
 
 const { watchDogLoopTime, watchDogWaitTime } = constants;
+
+let isPromotionInProgress: boolean = false;
 
 async function healthCheck(dbConnection: IpostgranceDBSocket, dbType: string) {
   // Health Check Query
   const query = "SELECT 1;";
-  const queryLength = Buffer.byteLength(query);
-  // 1 (Message Type Identifier) + 4 (Message length)
-  // + Query Length + 1 (Terminator)
-  const bufferLength = 1 + 4 + queryLength + 1;
-  const queryBuffer = Buffer.allocUnsafe(bufferLength);
-  let offset = 0;
-  queryBuffer.write("Q", offset);
-  offset += 1;
-  queryBuffer.writeInt32BE(4 + queryLength + 1, offset);
-  offset += 4;
-  queryBuffer.write(query, offset);
-  offset += queryLength;
-  queryBuffer.write("\0", offset);
+  const { queryBuffer } = generateQueryBuffer({ query });
   dbConnection.write(queryBuffer);
 }
 
-function promoteReplica(params: { id: string }) {
-  const replicas = session.watchDog.replicas;
-  const { id } = params;
-  const { lastHealthCheckTimestamp, dbConnection } = replicas[id];
+function promoteReplica() {
+  const { replicaPromotionHost, replicaPromotionPort } = constants;
+  // Make Promote Query
+  const query = "select pg_promote();";
+  const { queryBuffer } = generateQueryBuffer({ query });
 
-  // Promote Replica To Primary
-  const promoteQuery = "";
-  ////
-  //
-  //
+
+  // Fetch Replica configuration
+  let replicaIdForPromotion = "";
+  const replicas = session.watchDog.replicas;
+  Object.entries(replicas).forEach(([key, value]) => {
+    const { host, port } = value;
+    if (host === replicaPromotionHost && port === replicaPromotionPort) {
+      replicaIdForPromotion = key;
+    }
+  });
+
+  // Promote Replica to Primary
+  if (replicaIdForPromotion) {
+    const { dbConnection } = replicas[replicaIdForPromotion];
+    dbConnection.write(queryBuffer);
+  }
+
+
   // Update in session
   // Replace primary with replica
+  session.primary = replicaIdForPromotion;
   // Update the dbConnection.type on each connection in connectionPool
+  const { connectionPool } = sessionById[replicaIdForPromotion];
+  for (let i = 0; i < connectionPool.length; i++) {
+    const conn = connectionPool[i];
+    conn.type = "primary";
+  }
+
+  // Remove from replica MachinePool in session
+  const newMachinePool: string[] = [];
+  for (let i = 0; i < session.replicas.machinePool.length; i++) {
+    if (!(session.replicas.machinePool[i] === replicaIdForPromotion)) {
+      newMachinePool.push(session.replicas.machinePool[i]);
+    }
+  }
+  session.replicas.machinePool = newMachinePool;
+
 
   // Update in WatchDog
   // Replace primary with replica &
   // remove from replicas
+  const watchDogPrimaryKey = Object.keys(session.watchDog.primary)[0];
+  delete session.watchDog.primary[watchDogPrimaryKey];
+  session.watchDog.primary[replicaIdForPromotion] =
+    session.watchDog.replicas[replicaIdForPromotion];
+  session.watchDog.primary[replicaIdForPromotion].dbConnection.type = "primary";
+  delete session.watchDog.replicas[replicaIdForPromotion];
+
+  // Complete Promotion
+  isPromotionInProgress = false;
+}
+
+function failoverInformation() {
+  const { sendFailoverInformation, failoverInformationEndpoint } = constants;
+  if (!sendFailoverInformation) {
+    console.log("Not sending failover information.");
+    return;
+  }
+  // Api Endpoint To Inform
+  if (failoverInformationEndpoint) {
+    httpRequest({ url: failoverInformationEndpoint });
+  } else {
+    console.log("No failoverInformationEndpoint configured.");
+  }
 }
 
 function removeReplica(params: { id: string }) {
@@ -60,6 +104,13 @@ function removeReplica(params: { id: string }) {
 }
 
 async function watchDog() {
+  if (isPromotionInProgress) {
+    console.log(
+      "Watchdog is suspended, till replica to primary promotion is completed"
+    );
+    return;
+  }
+
   const primary = session.watchDog.primary;
   const replicas = session.watchDog.replicas;
 
@@ -70,9 +121,10 @@ async function watchDog() {
 
   const now = new Date().getTime();
   if (now - lastHealthCheckTimestamp > watchDogWaitTime * 1000) {
-    // Promote first replica from the list of replicas
-    const firstReplicaId = Object.keys(replicas)[0];
-    promoteReplica({ id: firstReplicaId });
+    // Send failover information
+    failoverInformation();
+    // Promote replica
+    promoteReplica();
   } else {
     // Check Health : Primary
     if (
@@ -146,13 +198,13 @@ async function watchDog() {
           session.watchDog.replicas[replicaIds[i]] = {
             lastHealthCheckTimestamp,
             dbConnection,
+            host,
+            port,
           };
         }
       }
     }
   }
-
-  // Api Endpoint To Inform
 
   setTimeout(watchDog, watchDogLoopTime * 1000);
 }
