@@ -1,6 +1,6 @@
 import constants from "../constants";
 import connectToDB from "./connect";
-import { IpostgranceDBSocket } from "./interface";
+import { IpostgranceDBSocket, IconnectionType } from "./interface";
 import { sessionById, session } from "./session";
 import { httpRequest, generateQueryBuffer } from "../utils";
 
@@ -82,7 +82,11 @@ function promoteReplica() {
   isPromotionInProgress = false;
 }
 
-function failoverInformation() {
+function failoverInformation(params: {
+  type: IconnectionType;
+  host: string;
+  port: number;
+}) {
   const { sendFailoverInformation, failoverInformationEndpoint } = constants;
   if (!sendFailoverInformation) {
     console.log("Not sending failover information.");
@@ -90,7 +94,16 @@ function failoverInformation() {
   }
   // Api Endpoint To Inform
   if (failoverInformationEndpoint) {
-    httpRequest({ url: failoverInformationEndpoint });
+    const { type, host, port } = params;
+    const data = {
+      timestamp: new Date().getTime(),
+      failureType: "database failure",
+      application: "Postgrancer",
+      databaseType: type,
+      host,
+      port,
+    };
+    httpRequest({ method: "post", url: failoverInformationEndpoint, data });
   } else {
     console.log("No failoverInformationEndpoint configured.");
   }
@@ -131,7 +144,11 @@ async function watchDog() {
   const now = new Date().getTime();
   if (now - lastHealthCheckTimestamp > watchDogWaitTime * 1000) {
     // Send failover information
-    failoverInformation();
+    failoverInformation({
+      type: "primary",
+      host: primaryConnection.host || "primary db host",
+      port: primaryConnection.port || 0,
+    });
     // Promote replica
     promoteReplica();
   } else {
@@ -177,6 +194,12 @@ async function watchDog() {
 
     const now = new Date().getTime();
     if (now - lastHealthCheckTimestamp > watchDogWaitTime * 1000) {
+      // Send failover information
+      failoverInformation({
+        type: "replica",
+        host: replicaConnection.host || `replica ${i} db host`,
+        port: replicaConnection.port || 0,
+      });
       removeReplica({ id: replicaIds[i] });
     } else {
       if (

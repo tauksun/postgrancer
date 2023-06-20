@@ -1,10 +1,24 @@
-import { request } from "http";
-import { URL } from "url";
+import axios from "axios";
+type httpMethod = "get" | "post";
 
-function httpRequest(params: { url: string }) {
-  const { url } = params;
-  const options = new URL(url);
+async function httpRequest(params: {
+  method: httpMethod;
+  url: string;
+  data?: any;
+  headers?: any;
+}) {
+  try {
+    const { method, url, data = {}, headers = null } = params;
 
+    const defaultHeaders = {
+      "content-type": "application/json",
+    };
+    await axios[method](url, data, {
+      headers: headers || defaultHeaders,
+    });
+  } catch (error) {
+    console.log("Error occured during http request : ", error);
+  }
 }
 
 export { httpRequest };
