@@ -10,14 +10,19 @@ const connectToDB = (options: {
   host: string;
   port: number;
   reConnecting?: boolean;
+  watchDogConnection?: boolean;
 }): Promise<IpostgranceDBSocket> => {
   return new Promise((resolve, reject) => {
-    const { type, id, host, port, reConnecting } = options;
+    const { type, id, host, port, reConnecting, watchDogConnection } = options;
     const dbConnection: IpostgranceDBSocket = net.createConnection({
       host,
       port,
     });
+
+    // Flags
     dbConnection.reConnecting = reConnecting;
+    dbConnection.watchDogConnection = watchDogConnection;
+
     dbConnection.on("ready", () => {
       dbConnection.id = id;
       dbConnection.type = type;

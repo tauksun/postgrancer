@@ -49,10 +49,10 @@ async function establishPrimaryDatabaseConnections() {
     id: primaryId,
     host,
     port,
+    watchDogConnection: true,
   });
 
   const now = new Date().getTime();
-  watchDogPrimaryConnection.watchDogConnection = true;
   session.watchDog.primary = {
     [primaryId]: {
       lastHealthCheckTimestamp: now,
@@ -117,10 +117,10 @@ async function establishReplicasDatabaseConnections() {
         id: replicaId,
         host,
         port,
+        watchDogConnection: true,
       });
 
       const now = new Date().getTime();
-      watchDogReplicaConnection.watchDogConnection = true;
       session.watchDog.replicas = {
         [replicaId]: {
           lastHealthCheckTimestamp: now,

@@ -166,6 +166,7 @@ async function watchDog() {
         id: primaryId,
         host,
         port,
+        watchDogConnection: true,
       });
       if (dbConnection) {
         // Delete & Assign
@@ -209,6 +210,7 @@ async function watchDog() {
           id: replicaIds[i],
           host,
           port,
+          watchDogConnection: true,
         });
         if (dbConnection) {
           // Delete & Assign
