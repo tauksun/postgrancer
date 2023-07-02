@@ -40,7 +40,8 @@ function getDatabaseConnection(params: { type?: IdbPoolType; id?: string }) {
         sessionById[primaryId].current += 1;
       }
       connection = sessionById[primaryId].connectionPool[current];
-      if (!connection.locked) {
+      // Check if connection is active & un-locked
+      if (connection?.isActive && !connection?.locked && !connection?.error) {
         break;
       } else {
         connection = null;
@@ -81,7 +82,7 @@ function getDatabaseConnection(params: { type?: IdbPoolType; id?: string }) {
           sessionById[currentReplicaId].connectionPool[
             replicaConnectionPoolCurrent
           ];
-        if (!connection.locked) {
+        if (connection?.isActive && !connection?.locked && !connection?.error) {
           break;
         } else {
           connection = null;

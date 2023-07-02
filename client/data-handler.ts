@@ -177,14 +177,6 @@ async function dataHandler(data: Buffer, socket: IpostgranceClientSocket) {
     // Following bind/execute/sync message after a parseCommand message
     // must go to same dbConnection (which parseCommand message was sent to)
 
-    if (messageType === "bindCommand") {
-      // This increases the time for a extended query
-      // if the client issues mulitple bind statement
-      // after a parse command
-
-      socket.extendedQueryTimestamp = new Date().getTime();
-    }
-
     let dbConnection = null;
     const commandData = data;
     const attachSameConnection = () => {

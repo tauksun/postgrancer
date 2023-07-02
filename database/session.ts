@@ -1,3 +1,4 @@
+import { IdbPoolType } from "../client/interface";
 import { IpostgranceDBSocket } from "./interface";
 
 // Use as circular queue //
@@ -9,6 +10,9 @@ const sessionById: {
     current: number;
     connectionPool: IpostgranceDBSocket[];
     maxConnections: number;
+    host: string;
+    port: number;
+    type: IdbPoolType;
   };
 } = {};
 

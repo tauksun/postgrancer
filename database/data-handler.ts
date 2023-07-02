@@ -81,11 +81,17 @@ function dataHandler(params: {
           data,
           _postgrancerDBConnectionData: connectionData,
         });
-        // Add to connection pool
+        // Add new connection to pool
         const connectionId = dbConnection.id;
-        // Do not add watchDog database connection to the pool
+        dbConnection.isActive = true;
+        //1. Do not push re-connecting connection to pool, they will be taken
+        // care by poolManager
+        //2. Do not add watchDog database connection to the pool
         // This is a reserved connection to be used only for healthcheck
-        if (connectionId && !dbConnection.watchDogConnection) {
+        if (connectionId && dbConnection.reConnecting) {
+          // Successfully re-connected at this stage
+          dbConnection.reConnecting = false;
+        } else if (connectionId && !dbConnection.watchDogConnection) {
           sessionById[connectionId].connectionPool.push(dbConnection);
         }
       }

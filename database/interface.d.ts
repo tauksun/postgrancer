@@ -22,6 +22,9 @@ interface IpostgranceDBSocket extends Socket {
   lockedAt?: number;
   lastWriteAt?: number;
   watchDogConnection?: boolean;
+  error?: boolean;
+  isActive?: boolean;
+  reConnecting?: boolean;
 }
 
 export { IpostgranceDBSocket, _IpostgrancerDBConnectionData, IconnectionType };

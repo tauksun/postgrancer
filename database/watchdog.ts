@@ -153,21 +153,14 @@ async function watchDog() {
     promoteReplica();
   } else {
     // Check Health : Primary
-    if (
-      primaryConnection &&
-      true /**
-   someother property on  dbConnection 
-   which signifies that this is active connection &
-   not just a value in a array 
-      **/
-    ) {
+    if (primaryConnection && !primaryConnection.error) {
       healthCheck(primaryConnection, "primary");
     } else {
       console.error(
         `No dbConnection found for Primary,
-       Retrying : Establishing Primary DB connection...`
+       Retrying : Establishing DB connection...`
       );
-      const { host, port } = primaryConnection || {};
+      const { host = "", port = 0 } = primaryConnection;
       const dbConnection = await connectToDB({
         type: "primary",
         id: primaryId,
@@ -202,22 +195,15 @@ async function watchDog() {
       });
       removeReplica({ id: replicaIds[i] });
     } else {
-      if (
-        replicaConnection &&
-        true /**
-   someother property on  dbConnection 
-   which signifies that this is active connection &
-   not just a value in a array 
-      **/
-      ) {
+      if (replicaConnection && !replicaConnection.error) {
         healthCheck(replicaConnection, `replica-${i + 1}`);
       } else {
         console.error(
           `No dbConnection found for REPLICA-${i + 1}, with replicaId : ${
             replicaIds[i]
-          }.\nRetrying : Establishing Primary DB connection...`
+          }.\nRetrying : Establishing DB connection...`
         );
-        const { host, port } = replicaConnection || {};
+        const { host = "", port = 0 } = replicaConnection;
         const dbConnection = await connectToDB({
           type: "replica",
           id: replicaIds[i],

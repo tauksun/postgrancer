@@ -27,7 +27,6 @@ interface IpostgranceClientSocket extends Socket {
   auth?: Iauth;
   prevDbId?: IprevDbId;
   isExtendedQuery?: boolean;
-  extendedQueryTimestamp?: number;
   previousCommandDbConnection?: IpreviousCommandDbConnection;
   arrivalTimestamp?: number;
   timeoutQueueID?: ItimeoutQueueID;

@@ -20,6 +20,9 @@ async function establishPrimaryDatabaseConnections() {
     current: 0,
     connectionPool: [],
     maxConnections: connectionPool,
+    type: "primary",
+    host,
+    port,
   };
 
   for (let i = 0; i < connectionPool; i++) {
@@ -78,6 +81,9 @@ async function establishReplicasDatabaseConnections() {
         current: 0,
         connectionPool: [],
         maxConnections: replicaConnectionPool[i],
+        type: "replica",
+        host,
+        port,
       };
 
       let connectionPool = replicaConnectionPool[i];
@@ -133,8 +139,8 @@ async function establishReplicasDatabaseConnections() {
 function establishDatabaseConnections() {
   establishPrimaryDatabaseConnections();
   establishReplicasDatabaseConnections();
-  poolManager();
-  setTimeout(watchDog, 5000);
+  setTimeout(poolManager, 10000);
+  setTimeout(watchDog, 10000);
 }
 
 export { establishDatabaseConnections };

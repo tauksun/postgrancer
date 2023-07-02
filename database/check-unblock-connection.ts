@@ -117,7 +117,7 @@ function checkAndUnblock(params: {
       noData ||
       emptyQueryResponse
     ) {
-      dbConnection.locked = false; 
+      dbConnection.locked = false;
     }
   }
 }
