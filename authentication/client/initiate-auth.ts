@@ -16,9 +16,10 @@ function initiateClientAuthSession(data: Buffer): {
 
   // Validate Protocol Version
   if (protocol !== constants.protocol) {
-    return {
-      error: "Protocol does not match",
-    };
+    // TODO: Check for different versions of ORM & in different languages
+    // return {
+    //   error: "Protocol does not match",
+    // };
   }
 
   let startUpMessageData = "";
