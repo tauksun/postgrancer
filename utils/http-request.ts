@@ -1,4 +1,4 @@
-import axios from "axios";
+const fetch = require("node-fetch");
 type httpMethod = "get" | "post";
 
 async function httpRequest(params: {
@@ -13,7 +13,9 @@ async function httpRequest(params: {
     const defaultHeaders = {
       "content-type": "application/json",
     };
-    await axios[method](url, data, {
+    await fetch(url, {
+      method,
+      body: JSON.stringify(data),
       headers: headers || defaultHeaders,
     });
   } catch (error) {
