@@ -2,6 +2,8 @@ import {
   initiateClientAuthSession,
   continueClientSaslSession,
   finalClientSaslSession,
+  authenticationOK,
+  additionalDatabaseMetaData,
 } from "../authentication";
 import clearSession from "./clear-session";
 import { IdbPoolType, IpostgranceClientSocket } from "./interface";
@@ -103,6 +105,18 @@ async function dataHandler(data: Buffer, socket: IpostgranceClientSocket) {
           socket.auth.stage++;
           socket.auth.isAuthenticated = true;
         }
+
+        // Authentication OK
+        const { data: authenticationOKBuffer } = authenticationOK();
+        socket.write(authenticationOKBuffer);
+
+        // Additional data
+        const { data: additionalParameterBuffers } =
+          additionalDatabaseMetaData();
+        for (let buffer of additionalParameterBuffers) {
+          socket.write(buffer);
+        }
+
         //Send ready for query message
         const readyForQueryBuffer = readyForQueryMessageBuffer();
         socket.write(readyForQueryBuffer);

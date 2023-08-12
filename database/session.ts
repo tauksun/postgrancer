@@ -41,6 +41,9 @@ const session: {
       };
     };
   };
+  databaseMetaData: {
+    [key: string]: string;
+  };
 } = {
   primary: "",
   replicas: {
@@ -51,6 +54,7 @@ const session: {
     primary: {},
     replicas: {},
   },
+  databaseMetaData: {},
 };
 
 export { session, sessionById };

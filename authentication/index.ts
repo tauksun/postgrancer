@@ -9,6 +9,8 @@ import {
   initiateClientAuthSession,
   continueClientSaslSession,
   finalClientSaslSession,
+  authenticationOK,
+  additionalDatabaseMetaData,
 } from "./client";
 
 export {
@@ -21,4 +23,6 @@ export {
   initiateClientAuthSession,
   continueClientSaslSession,
   finalClientSaslSession,
+  authenticationOK,
+  additionalDatabaseMetaData,
 };
