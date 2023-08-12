@@ -15,6 +15,7 @@ interface Iauth {
   responseNonceContinue?: string;
   clientNonceContinue?: string;
   saltContinue?: string;
+  userContinue?: string;
 }
 
 type IdbPoolType = "primary" | "replica";

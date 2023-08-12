@@ -7,7 +7,8 @@ function finalClientSaslSession(
   data: Buffer,
   responseNonceFromContinueStage: string,
   clientNonceFromContinueStage: string,
-  saltFromContinueStage: string
+  saltFromContinueStage: string,
+  userFromContinueStage: string
 ): {
   error?: string;
   responseBuffer?: Buffer;
@@ -79,7 +80,8 @@ function finalClientSaslSession(
   const clientKey = hmacSha256(saltedPassword, "Client Key");
   const storedKey = sha256(clientKey);
 
-  const clientFirstMessageBare = "n=*,r=" + clientNonceFromContinueStage;
+  const clientFirstMessageBare =
+    "n=" + userFromContinueStage + ",r=" + clientNonceFromContinueStage;
   const serverFirstMessage =
     "r=" +
     responseNonceFromContinueStage +

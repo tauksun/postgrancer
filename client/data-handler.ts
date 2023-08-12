@@ -55,6 +55,7 @@ async function dataHandler(data: Buffer, socket: IpostgranceClientSocket) {
           responseNonce: responseNonceContinue,
           clientNonce: clientNonceContinue,
           salt: saltContinue,
+          user: userContinue,
         } = continueClientSaslSession(data);
 
         if (errorContinue) {
@@ -68,6 +69,7 @@ async function dataHandler(data: Buffer, socket: IpostgranceClientSocket) {
           socket.auth.responseNonceContinue = responseNonceContinue;
           socket.auth.saltContinue = saltContinue;
           socket.auth.clientNonceContinue = clientNonceContinue;
+          socket.auth.userContinue = userContinue;
         }
         return;
 
@@ -80,6 +82,7 @@ async function dataHandler(data: Buffer, socket: IpostgranceClientSocket) {
         const saltFromContinueStage = socket.auth?.saltContinue || "";
         const clientNonceFromContinueStage =
           socket.auth?.clientNonceContinue || "";
+        const userFromContinueStage = socket.auth?.userContinue || "";
 
         const {
           error: errorFinal = null,
@@ -88,7 +91,8 @@ async function dataHandler(data: Buffer, socket: IpostgranceClientSocket) {
           data,
           responseNonceFromContinueStage,
           clientNonceFromContinueStage,
-          saltFromContinueStage
+          saltFromContinueStage,
+          userFromContinueStage
         );
 
         if (errorFinal) {
