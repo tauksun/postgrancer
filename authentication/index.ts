@@ -11,6 +11,8 @@ import {
   finalClientSaslSession,
   authenticationOK,
   additionalDatabaseMetaData,
+  isSSLRequest,
+  sslNegotiationResponse,
 } from "./client";
 
 export {
@@ -25,4 +27,6 @@ export {
   finalClientSaslSession,
   authenticationOK,
   additionalDatabaseMetaData,
+  isSSLRequest,
+  sslNegotiationResponse,
 };

@@ -53,6 +53,10 @@ const replicaPromotionPort: number | null = null;
 const sendFailoverInformation: boolean = false;
 const failoverInformationEndpoint: string | null = null;
 
+// SSL
+const enableSSL: boolean = false;
+const postgresSSLIdentifier: number = 80877103;
+
 const defaults = {
   protocol,
   scramIterations,
@@ -75,6 +79,8 @@ const defaults = {
   replicaPromotionPort,
   sendFailoverInformation,
   failoverInformationEndpoint,
+  enableSSL,
+  postgresSSLIdentifier,
 };
 
 export default defaults;

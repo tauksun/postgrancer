@@ -4,6 +4,8 @@ import {
   finalClientSaslSession,
   authenticationOK,
   additionalDatabaseMetaData,
+  isSSLRequest,
+  sslNegotiationResponse,
 } from "../authentication";
 import clearSession from "./clear-session";
 import { IdbPoolType, IpostgranceClientSocket } from "./interface";
@@ -35,6 +37,17 @@ async function dataHandler(data: Buffer, socket: IpostgranceClientSocket) {
     const stage = socket.auth?.stage;
     switch (stage) {
       case 0:
+        // check for SSL
+        const isSSL = isSSLRequest(data);
+        if (isSSL) {
+          const { enableSSL } = constants;
+          const { data: negotiationResponseBuffer } = sslNegotiationResponse({
+            enableSSL,
+          });
+          socket.write(negotiationResponseBuffer);
+          return;
+        }
+
         // Parse Start Up Packet
         // Send Scram as authentication method
         const { error = null, responseBuffer = "" } =

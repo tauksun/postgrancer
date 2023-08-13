@@ -110,6 +110,13 @@ const failoverInformationEndpoint: string | null =
   environmentVariables.failoverInformationEndpoint ||
   defaults.failoverInformationEndpoint;
 
+// SSL
+const enableSSL: boolean =
+  environmentVariables.enableSSL === "true" ? true : defaults.enableSSL;
+const postgresSSLIdentifier: number = environmentVariables.postgresSSLIdentifier
+  ? parseInt(environmentVariables.postgresSSLIdentifier)
+  : defaults.postgresSSLIdentifier;
+
 function validateEnvs() {
   // 1. Promiting replica configuration  must
   // match the configuration from the replicas
@@ -171,6 +178,8 @@ const constants = {
   replicaPromotionPort,
   sendFailoverInformation,
   failoverInformationEndpoint,
+  enableSSL,
+  postgresSSLIdentifier,
 };
 
 export default constants;
