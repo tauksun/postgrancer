@@ -7,6 +7,7 @@ function continueClientSaslSession(data: Buffer): {
   responseNonce?: string;
   clientNonce?: string;
   salt?: string;
+  user?: string;
 } {
   let responseBuffer = null,
     offset = 0;
@@ -97,6 +98,7 @@ function continueClientSaslSession(data: Buffer): {
     responseNonce,
     clientNonce,
     salt,
+    user,
   };
 }
 

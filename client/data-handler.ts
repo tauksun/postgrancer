@@ -2,6 +2,10 @@ import {
   initiateClientAuthSession,
   continueClientSaslSession,
   finalClientSaslSession,
+  authenticationOK,
+  additionalDatabaseMetaData,
+  isSSLRequest,
+  sslNegotiationResponse,
 } from "../authentication";
 import clearSession from "./clear-session";
 import { IdbPoolType, IpostgranceClientSocket } from "./interface";
@@ -33,6 +37,17 @@ async function dataHandler(data: Buffer, socket: IpostgranceClientSocket) {
     const stage = socket.auth?.stage;
     switch (stage) {
       case 0:
+        // check for SSL
+        const isSSL = isSSLRequest(data);
+        if (isSSL) {
+          const { enableSSL } = constants;
+          const { data: negotiationResponseBuffer } = sslNegotiationResponse({
+            enableSSL,
+          });
+          socket.write(negotiationResponseBuffer);
+          return;
+        }
+
         // Parse Start Up Packet
         // Send Scram as authentication method
         const { error = null, responseBuffer = "" } =
@@ -55,6 +70,7 @@ async function dataHandler(data: Buffer, socket: IpostgranceClientSocket) {
           responseNonce: responseNonceContinue,
           clientNonce: clientNonceContinue,
           salt: saltContinue,
+          user: userContinue,
         } = continueClientSaslSession(data);
 
         if (errorContinue) {
@@ -68,6 +84,7 @@ async function dataHandler(data: Buffer, socket: IpostgranceClientSocket) {
           socket.auth.responseNonceContinue = responseNonceContinue;
           socket.auth.saltContinue = saltContinue;
           socket.auth.clientNonceContinue = clientNonceContinue;
+          socket.auth.userContinue = userContinue;
         }
         return;
 
@@ -80,6 +97,7 @@ async function dataHandler(data: Buffer, socket: IpostgranceClientSocket) {
         const saltFromContinueStage = socket.auth?.saltContinue || "";
         const clientNonceFromContinueStage =
           socket.auth?.clientNonceContinue || "";
+        const userFromContinueStage = socket.auth?.userContinue || "";
 
         const {
           error: errorFinal = null,
@@ -88,7 +106,8 @@ async function dataHandler(data: Buffer, socket: IpostgranceClientSocket) {
           data,
           responseNonceFromContinueStage,
           clientNonceFromContinueStage,
-          saltFromContinueStage
+          saltFromContinueStage,
+          userFromContinueStage
         );
 
         if (errorFinal) {
@@ -99,6 +118,18 @@ async function dataHandler(data: Buffer, socket: IpostgranceClientSocket) {
           socket.auth.stage++;
           socket.auth.isAuthenticated = true;
         }
+
+        // Authentication OK
+        const { data: authenticationOKBuffer } = authenticationOK();
+        socket.write(authenticationOKBuffer);
+
+        // Additional data
+        const { data: additionalParameterBuffers } =
+          additionalDatabaseMetaData();
+        for (let buffer of additionalParameterBuffers) {
+          socket.write(buffer);
+        }
+
         //Send ready for query message
         const readyForQueryBuffer = readyForQueryMessageBuffer();
         socket.write(readyForQueryBuffer);
